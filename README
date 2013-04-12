@@ -1,0 +1,23 @@
+NAME
+    Kelp - A web framework light, yet rich in nutrients.
+
+MANUAL
+  Kelp::Manual::Main
+    Main manual.
+
+  Kelp::Manual::Less
+    Information on using "Kelp::Less".
+
+SUPPORT
+    *   GitHub: https://github.com/naturalist/kelp
+
+    *   Mailing list:
+        https://groups.google.com/forum/?fromgroups#!forum/perl-kelp
+
+AUTHOR
+    Stefan Geneshky - minimal@cpan.org
+
+LICENSE
+    This module and all the modules in this package are governed by the same
+    license as Perl itself.
+

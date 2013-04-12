@@ -1,0 +1,49 @@
+2013-03-30 10:57:43 - info - 127.0.0.1 - GET /log - CODE(0x22a56e8)
+2013-03-30 10:57:43 - debug - text
+$VAR1 = {
+          'bar' => 'foo'
+        };
+
+$VAR1 = [
+          1,
+          2,
+          3
+        ];
+
+2013-03-30 11:01:28 - info - 127.0.0.1 - GET /log - CODE(0x17e3670)
+2013-03-30 11:01:28 - debug - text
+2013-03-30 11:01:28 - debug - $VAR1 = {
+          'bar' => 'foo'
+        };
+
+2013-03-30 11:01:28 - debug - $VAR1 = [
+          1,
+          2,
+          3
+        ];
+
+2013-03-30 11:06:07 - info - 127.0.0.1 - GET /log - CODE(0x3084670)
+2013-03-30 11:06:07 - debug - text
+2013-03-30 11:06:07 - debug - $VAR1 = {
+          'bar' => 'foo'
+        };
+
+2013-03-30 11:06:07 - debug - $VAR1 = [
+          1,
+          2,
+          3
+        ];
+
+2013-03-30 11:15:05 - info - 127.0.0.1 - GET /file - CODE(0x175fe58)
+2013-03-30 11:15:05 - critical - CODE(0x175fe58) did not render for method GET
+2013-04-02 18:30:01 - info - 127.0.0.1 - GET /test - MyApp::test
+2013-04-02 18:30:01 - critical - test is a read-only accessor at (eval 76) line 5.
+
+2013-04-02 18:30:43 - info - 127.0.0.1 - GET /test - MyApp::test
+2013-04-02 18:30:43 - critical - test is a read-only accessor at (eval 76) line 5.
+
+2013-04-02 18:31:49 - info - 127.0.0.1 - GET /test - MyApp::test
+2013-04-02 19:08:56 - info - 127.0.0.1 - GET /test - MyApp::test
+2013-04-02 19:09:13 - info - 127.0.0.1 - GET /test - MyApp::test
+2013-04-02 19:12:11 - info - 127.0.0.1 - GET /test - MyApp::test
+2013-04-02 19:25:49 - info - 127.0.0.1 - GET /test - MyApp::test

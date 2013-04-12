@@ -1,0 +1,712 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title></title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body style="background-color: white">
+
+
+
+<ul id="index">
+  <li><a href="#TITLE">TITLE</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#WHY-KELP-">WHY KELP?</a></li>
+  <li><a href="#CREATING-A-NEW-WEB-APP">CREATING A NEW WEB APP</a>
+    <ul>
+      <li><a href="#Directory-structure">Directory structure</a></li>
+      <li><a href="#The-application-modules">The application modules</a></li>
+      <li><a href="#Routing">Routing</a>
+        <ul>
+          <li><a href="#Destinations">Destinations</a></li>
+          <li><a href="#Restrict-HTTP-methods">Restrict HTTP methods</a></li>
+          <li><a href="#Named-captures">Named captures</a>
+            <ul>
+              <li><a href="#Explicit">Explicit</a></li>
+              <li><a href="#Optional">Optional</a></li>
+              <li><a href="#Wildcards">Wildcards</a></li>
+            </ul>
+          </li>
+          <li><a href="#Placeholder-restrictions">Placeholder restrictions</a></li>
+          <li><a href="#Placeholder-defaults">Placeholder defaults</a></li>
+          <li><a href="#Bridges">Bridges</a></li>
+          <li><a href="#URL-building">URL building</a></li>
+        </ul>
+      </li>
+      <li><a href="#Quick-development-using-Kelp::Less">Quick development using Kelp::Less</a></li>
+      <li><a href="#Adding-middleware">Adding middleware</a></li>
+      <li><a href="#Deploying">Deploying</a></li>
+      <li><a href="#Testing">Testing</a></li>
+      <li><a href="#Building-an-HTTP-response">Building an HTTP response</a>
+        <ul>
+          <li><a href="#Automatic-content-type">Automatic content type</a></li>
+          <li><a href="#Rendering-text">Rendering text</a></li>
+          <li><a href="#Rendering-HTML">Rendering HTML</a></li>
+          <li><a href="#Custom-content-type">Custom content type</a></li>
+          <li><a href="#Return-404-or-500-errors">Return 404 or 500 errors</a></li>
+          <li><a href="#Templates">Templates</a></li>
+          <li><a href="#Headers">Headers</a></li>
+          <li><a href="#Delayed-responses">Delayed responses</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><a href="#ATTRIBUTES">ATTRIBUTES</a>
+    <ul>
+      <li><a href="#host">host</a></li>
+      <li><a href="#mode">mode</a></li>
+      <li><a href="#path">path</a></li>
+      <li><a href="#name">name</a></li>
+      <li><a href="#charset">charset</a></li>
+      <li><a href="#req">req</a></li>
+      <li><a href="#res">res</a></li>
+    </ul>
+  </li>
+  <li><a href="#METHODS">METHODS</a>
+    <ul>
+      <li><a href="#build">build</a></li>
+      <li><a href="#load_module">load_module</a></li>
+      <li><a href="#request">request</a></li>
+      <li><a href="#response">response</a></li>
+      <li><a href="#run">run</a></li>
+      <li><a href="#param">param</a></li>
+      <li><a href="#stash">stash</a></li>
+      <li><a href="#named">named</a></li>
+      <li><a href="#url_for">url_for</a></li>
+    </ul>
+  </li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#CREDITS">CREDITS</a></li>
+  <li><a href="#LICENSE">LICENSE</a></li>
+</ul>
+
+<h1 id="TITLE">TITLE</h1>
+
+<p>Kelp - A web framework light, yet rich in nutrients.</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p>File <code>MyWebApp.pm</code>:</p>
+
+<pre><code>    package MyWebApp;
+    use base &#39;Kelp&#39;;
+
+    sub build {
+        my $self = shift;
+        my $r = $self-&gt;routes;
+        $r-&gt;add( &quot;/hello&quot;, sub { &quot;Hello, world!&quot; } );
+        $r-&gt;add( &#39;/hello/:name&#39;, &#39;greet&#39; );
+    }
+
+    sub greet {
+        my ( $self, $name ) = @_;
+        &quot;Hello, $name!&quot;;
+    }
+
+    1;</code></pre>
+
+<p>File <code>app.psgi</code>:</p>
+
+<pre><code>    use MyWebApp;
+    my $app = MyWebApp-&gt;new;
+    $app-&gt;run;</code></pre>
+
+<p>Or, for quick prototyping use <a>Kelp::Less</a>:</p>
+
+<pre><code>    use Kelp::Less;
+
+    get &#39;/hello/?name&#39; =&gt; sub {
+        my ( $self, $name ) = @_;
+        &quot;Hello &quot; . $name // &#39;world&#39;;
+    };
+
+    run;</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>If you&#39;re going to be deploying a Perl based web application, chances are that you will be using Plack. Plack has almost all necessary tools to create and maintain a healthy web app. It has tons of middleware, and several very well tested high performance preforking servers, such as Starman.</p>
+
+<p>Plack, however, is not a web framework, hence its creators have intentionally omitted adding certain components. This is where Kelp gets to shine. It provides a layer on top of Plack and puts everything together into a complete web framework.</p>
+
+<p>Kelp provides:</p>
+
+<ul>
+
+<li><p><b>Advanced Routing</b>. Create intricate, yet simple ways to capture HTTP requests and route them to their designated code. Use explicit and optional named placeholders, wildcards, or just regular expressions.</p>
+
+</li>
+<li><p><b>Flexible Configuration</b>. Use different configuration file for each environment, e.g. development, deployment, etc. Merge a temporary configuration into your current one for testing and debugging purposes.</p>
+
+</li>
+<li><p><b>Enhanced Logging</b>. Log messages at different levels of emergency. Log to a file, screen, or anything supported by Log::Dispatcher.</p>
+
+</li>
+<li><p><b>Powerful Rendering</b>. Use the built-in auto-rendering logic, or the template module of your choice to return rich text, html and JSON responses.</p>
+
+</li>
+<li><p><b>JSON encoder/decoder</b>. If you&#39;re serious about your back-end code. Kelp comes with JSON, but you can easily plug in JSON::XS or any decoder of your choice.</p>
+
+</li>
+<li><p><b>Extendable Core</b>. Kelp uses pluggable modules for everything. This allows anyone to add a module for a custom interface. Writing Kelp modules is a pleasant and fulfilling activity.</p>
+
+</li>
+<li><p><b>Sleek Testing</b>. Kelp takes Plack::Test and wraps it in an object oriented class of convenience methods. Testing is done via sending requests to your routes, then analyzing the response.</p>
+
+</li>
+</ul>
+
+<h1 id="WHY-KELP-">WHY KELP?</h1>
+
+<p>What makes Kelp different from the other Perl micro frameworks? There are a number of fine web frameworks on CPAN and most of them provide a complete platform for web app building. While those other frameworks bring their own deployment code, Kelp is heavily <i>Plack</i>-centric. It uses Plack as its foundation layer, and it builds the web framework on top of it. <code>Kelp::Request</code> is an extension of <code>Plack::Request</code>, <code>Kelp::Response</code> is an extension of <code>Plack::Response</code>. This approach of extending current CPAN code, puts familiar and well tested tools in the hands of the Kelp user.</p>
+
+<p>Kelp is a team player and it uses several popular, trusted CPAN modules for its internals. At the same time it doesn&#39;t include modules that it doesn&#39;t need, just because they are considered trendy. It does its best to keep a lean profile and a small footprint, and it&#39;s completely object manager agnostic.</p>
+
+<h1 id="CREATING-A-NEW-WEB-APP">CREATING A NEW WEB APP</h1>
+
+<h2 id="Directory-structure">Directory structure</h2>
+
+<p>Before you begin writing the internals of your app, you need to create the directory structure.</p>
+
+<pre><code>     .
+     |--/lib
+     |   |--MyApp.pm
+     |   |--/MyApp
+     |
+     |--/conf
+     |   |--myapp.conf
+     |   |--myapp_test.conf
+     |   |--myapp_deployment.conf
+     |
+     |--/view
+     |--/log
+     |--/t
+     |--app.psgi</code></pre>
+
+<dl>
+
+<dt id="lib"><b>/lib</b></dt>
+<dd>
+
+<p>The <code>lib</code> folder contains your application modules and any local modules that you want your app to use.</p>
+
+</dd>
+<dt id="conf"><b>/conf</b></dt>
+<dd>
+
+<p>The <code>conf</code> folder is where Kelp will look for configuration files. You need one main file, named exactly as your app, with the extension of <code>.conf</code>. You can also add other files that define different running environments. To change the running environment, you can specify the app <code>mode</code>, or you can set the <code>KELP_ENV</code> environment variable.</p>
+
+<pre><code>    my $app = MyApp-&gt;new( mode =&gt; &#39;development&#39; );</code></pre>
+
+<p>or</p>
+
+<pre><code>    % KELP_ENV=development plackup app.psgi</code></pre>
+
+</dd>
+<dt id="view"><b>/view</b></dt>
+<dd>
+
+<p>This is where the <code>Template</code> module will look for template files.</p>
+
+</dd>
+<dt id="log"><b>/log</b></dt>
+<dd>
+
+<p>This is where the <code>Logger</code> module will create <code>error.log</code>, <code>debug.log</code> and any other log files that were defined in the configuration.</p>
+
+</dd>
+<dt id="t"><b>/t</b></dt>
+<dd>
+
+<p>The <code>t</code> folder is traditionally used to hold test files. It is up to you to use it or not, although we strongly recommend that you write some automated test units for your web app.</p>
+
+</dd>
+<dt id="app.psgi"><b>app.psgi</b></dt>
+<dd>
+
+<p>This is the <a>PSGI</a> file, of the app, which you will deploy. In it&#39;s most basic form it should look like this:</p>
+
+<pre><code>    use lib &#39;../lib&#39;;
+    use MyApp;
+
+    my $app = MyApp-&gt;new;
+    $app-&gt;run;</code></pre>
+
+</dd>
+</dl>
+
+<h2 id="The-application-modules">The application modules</h2>
+
+<p>Your application&#39;s modules should be put in the <code>lib/</code> folder. The main module, in our example <code>MyApp.pm</code>, initializes any modules and variables that your app will use. Here is an example that uses <code>Moose</code> to create lazy attributes and initialize a database connection:</p>
+
+<pre><code>    package MyApp;
+    use Moose;
+
+    has dbh =&gt; (
+        is      =&gt; &#39;ro&#39;,
+        isa     =&gt; &#39;DBI&#39;,
+        lazy    =&gt; 1,
+        default =&gt; sub {
+            my $self   = shift;
+            my @config = @{ $self-&gt;config(&#39;dbi&#39;) };
+            return DBI-&gt;connect(@config);
+        }
+    );
+
+    sub build {
+        my $self = shift;
+        $self-&gt;route-&gt;add(&quot;/read/:id&quot;, &quot;read&quot;);
+    }
+
+    sub read {
+        my ( $self, $id ) = @_;
+        $self-&gt;dbh-&gt;selectrow_array(q[
+            SELECT * FROM problems
+            WHERE id = ?
+        ], $id);
+    }
+
+    1;</code></pre>
+
+<p>What is happening here?</p>
+
+<ul>
+
+<li><p>First, we create a lazy attribute and instruct it to connect to DBI. Notice that we have access to the current app and all of its internals via the <code>$self</code> variable. Notice also that the reason we define <code>dbh</code> as a <i>lazy</i> attribute is that <code>config</code> will not yet be initialized. All modules are initialized upon the creation of the object instance, e.g. when we call <code>MyApp-&gt;new</code>;</p>
+
+</li>
+<li><p>Then, we override Kelp&#39;s <a href="#build">&quot;build&quot;</a> subroutine to create a single route <code>/read/:id</code>, which is assigned to the subroutine <code>read</code> in the current module.</p>
+
+</li>
+<li><p>The <code>read</code> subroutine, takes <code>$self</code> and <code>$id</code> (the named placeholder from the path), and uses <code>$self-&gt;dbh</code> to retrieve data.</p>
+
+</li>
+</ul>
+
+<p><i>A note about object managers:</i> The above example uses <a>Moose</a>. It is entirely up to you to use Moose, another object manager, or no object manager at all. The above example will be just as successful if you used our own little <a>Kelp::Base</a>:</p>
+
+<pre><code>    package MyApp;
+    use Kelp::Base &#39;Kelp&#39;;
+
+    attr dbi =&gt; sub {
+        ...
+    };
+
+    1;</code></pre>
+
+<h2 id="Routing">Routing</h2>
+
+<p>Kelp uses a powerful and very flexible router. Traditionally, it is also light and consists of less than 300 lines of loose code (commends included). You are encouraged to read <a>Kelp::Routes</a>, but here are some key points. All examples are assumed to be inside the <a href="#build">&quot;build&quot;</a> method and <code>$r</code> is equal to <code>$self-&gt;routes</code>:</p>
+
+<h3 id="Destinations">Destinations</h3>
+
+<p>You can direct HTTP paths to subroutines in your modules or, you can use inline code.</p>
+
+<pre><code>    $r-&gt;add( &quot;/home&quot;, &quot;home&quot; );  # goes to sub home
+    $r-&gt;add( &quot;/legal&quot;, &quot;legal#view&quot; ); # goes to MyApp::Legal::view
+    $r-&gt;add( &quot;/about&quot;, sub { &quot;Content for about&quot; }); # inline</code></pre>
+
+<h3 id="Restrict-HTTP-methods">Restrict HTTP methods</h3>
+
+<p>Make a route only catch a specific HTTP method:</p>
+
+<pre><code>    $r-&gt;add( [ POST =&gt; &#39;/update&#39; ], &quot;update_user&quot; );</code></pre>
+
+<h3 id="Named-captures">Named captures</h3>
+
+<p>Using regular expressions is so Perl. Sometimes, however, it gets a little overwhelming. Use named paths if you anticipate that you or someone else will ever want to maintain your code.</p>
+
+<h4 id="Explicit">Explicit</h4>
+
+<pre><code>    $r-&gt;add( &quot;/update/:id&quot;, &quot;update&quot; );
+
+    # Later
+    sub update {
+        my ( $self, $id ) = @_;
+        # Do something with $id
+    }</code></pre>
+
+<h4 id="Optional">Optional</h4>
+
+<pre><code>    $r-&gt;add( &quot;/person/?name&quot;, sub {
+        my ( $self, $name ) = @_;
+        return &quot;I am &quot; . $name // &quot;nobody&quot;;
+    });</code></pre>
+
+<p>This will handle <code>/person</code>, <code>/person/</code> and <code>/person/jack</code>.</p>
+
+<h4 id="Wildcards">Wildcards</h4>
+
+<pre><code>    $r-&gt;add( &#39;/*article/:id&#39;, &#39;articles#view&#39; );</code></pre>
+
+<p>This will handle <code>/bar/foo/baz/500</code> and send it to <code>MyApp::Articles::view</code> with parameters <code>$article</code> equal to <code>bar/foo/baz</code> and <code>$id</code> equal to 500.</p>
+
+<h3 id="Placeholder-restrictions">Placeholder restrictions</h3>
+
+<p>Paths&#39; named placeholders can be restricted by providing regular expressions.</p>
+
+<pre><code>    $r-&gt;add( &#39;/user/:id&#39;, {
+        check =&gt; { id =&gt; &#39;\d+&#39; },
+        to    =&gt; &quot;users#get&quot;
+    });
+
+    # Matches /user/1000, but not /user/abc</code></pre>
+
+<h3 id="Placeholder-defaults">Placeholder defaults</h3>
+
+<p>This only applies to optional placeholders, or those prefixed with a question mark. If a default value is provided for any of them, it will be used in case the placeholder value is missing.</p>
+
+<pre><code>    $r-&gt;add( &#39;/:id/?other&#39;, defaults =&gt; { other =&gt; &#39;info&#39; } );
+
+    # GET /100;
+    # { id =&gt; 100, other =&gt; &#39;info&#39; }
+
+    # GET /100/delete;
+    # { id =&gt; 100, other =&gt; &#39;delete&#39; }</code></pre>
+
+<h3 id="Bridges">Bridges</h3>
+
+<p>A <i>bridge</i> is a route that has to return a true value in order for the next route in line to be processed.</p>
+
+<pre><code>    $r-&gt;add( &#39;/users&#39;, { to =&gt; &#39;Users::auth&#39;, bridge =&gt; 1 } );
+    $r-&gt;add( &#39;/users/:action&#39; =&gt; &#39;Users::dispatch&#39; );</code></pre>
+
+<p>See <a>&quot;BRIDGES&quot; in Kelp::Routes</a> for more information.</p>
+
+<h3 id="URL-building">URL building</h3>
+
+<p>Each path can be given a name and later a URL can be build using that name and the necessary arguments.</p>
+
+<pre><code>    $r-&gt;add( &quot;/update/:id&quot;, { name =&gt; &#39;update&#39;, to =&gt; &#39;user#update&#39; } );
+
+    # Later
+
+    my $url = $self-&gt;route-&gt;url(&#39;update&#39;, id =&gt; 1000); # /update/1000</code></pre>
+
+<h2 id="Quick-development-using-Kelp::Less">Quick development using Kelp::Less</h2>
+
+<p>For writing quick experimental web apps and to reduce the boiler plate, one could use <a>Kelp::Less</a>. In this case all of the code can be put in <code>app.psgi</code>: Look up the POD for <code>Kelp::Less</code> for many examples.</p>
+
+<h2 id="Adding-middleware">Adding middleware</h2>
+
+<p>Kelp, being Plack-centric, will let you easily add middleware. There are two ways to add middleware:</p>
+
+<p>In <code>app.psgi</code>:</p>
+
+<pre><code>    use MyApp;
+    use Plack::Builder;
+
+    my $app = MyApp-&gt;new();
+
+    builder {
+        enable &quot;Plack::Middleware::ContentLength&quot;;
+        $app-&gt;run;
+    };</code></pre>
+
+<p>By overloading the <a href="#run">&quot;run&quot;</a> subroutine in <code>lib/MyApp.pm</code>:</p>
+
+<pre><code>    sub run {
+        my $self = shift;
+        my $app = $self-&gt;SUPER::run(@_);
+        Plack::Middleware::ContentLength-&gt;wrap($app);
+    }</code></pre>
+
+<h2 id="Deploying">Deploying</h2>
+
+<p>Deploying a Kelp application is done the same way one would deploy any Plack app.</p>
+
+<pre><code>    % plackup -E deployment -s Starman app.psgi</code></pre>
+
+<h2 id="Testing">Testing</h2>
+
+<p>Kelp provides a test module called <code>Kelp::Test</code>. It is object oriented, and all methods return the <code>Kelp::Test</code> object, so they can be chained together. Testing is done by sending HTTP requests to an already built application and analyzing the response. Therefore, each test usually begins with the <a>&quot;request&quot; in Kelp::Test</a> method, which takes a single <a>HTTP::Request</a> parameter. It sends the request to the web app and saves the response as an <a>HTTP::Response</a> object.</p>
+
+<pre><code>    # file t/test.t
+
+    use MyApp;
+    use Kelp::Test;
+    use Test::More;
+    use HTTP::Request::Common;
+
+    my $app = MyApp-&gt;new( mode =&gt; &#39;test&#39; );
+    my $t = Kelp::Test-&gt;new( app =&gt; $app );
+
+    $t-&gt;request( GET &#39;/path&#39; )
+      -&gt;code_is(200)
+      -&gt;content_is(&quot;It works&quot;);
+
+    $t-&gt;request( POST &#39;/api&#39; )
+      -&gt;json_cmp({auth =&gt; 1});
+
+    done_testing;</code></pre>
+
+<p>What is happening here?</p>
+
+<ul>
+
+<li><p>First, we create an instance of the web application module, which we have previously built and placed in the <code>lib/</code> folder. We set the mode of the app to <code>test</code>, so that file <code>conf/myapp_test.conf</code> overrides the main configuration. The test configuration can contain anything you see fit. Perhaps you want to disable certain modules, or maybe you want to make DBI connect to a different database.</p>
+
+</li>
+<li><p>Second, we create an instance of the <code>Kelp::Test</code> class and tell it that it will perform all tests using our <code>$app</code> instance.</p>
+
+</li>
+<li><p>At this point we are ready to send requests to the app via the <a>request</a> method. It takes only one argument, an HTTP::Request object. It is very convenient to use the <a>HTTP::Request::Common</a> module here, because you can create common requests using abridged syntax, i.e. <code>GET</code>, <code>POST</code>, etc. The line <code>$t-&gt;request( GET &#39;/path&#39; )</code> fist creates a HTTP::Request GET object, and then passes it to the <code>request</code> method.</p>
+
+</li>
+<li><p>After we send the request, we can test the response using any of the <code>Test::</code> modules, or via the methods provided by <a>Kelp::Test</a>. In the above example, we test if we got a code 200 back from <code>/path</code> and if the returned content was <code>It works</code>.</p>
+
+</li>
+</ul>
+
+<p>Run the rest as usual, using <code>prove</code>:</p>
+
+<pre><code>    % prove -l t/test.t</code></pre>
+
+<p>Take a look at the <a>Kelp::Test</a> for details and more examples.</p>
+
+<h2 id="Building-an-HTTP-response">Building an HTTP response</h2>
+
+<p>Kelp contains an elegant module, called <a>Kelp::Response</a>, which extends <code>Plack::Response</code> with several useful methods. Most methods return <code>$self</code> after they do the required job. For the sake of the examples below, let&#39;s assume that all of the code is located inside a route definition.</p>
+
+<h3 id="Automatic-content-type">Automatic content type</h3>
+
+<p>Your routes don&#39;t always have to set the <code>response</code> object. You could just return a simple scalar value or a reference to a hash, array or anything that can be converted to JSON.</p>
+
+<pre><code>    # Content-type automatically set to &quot;text/html&quot;
+    sub text_route {
+        return &quot;There, there ...&quot;;
+    }
+
+    # Content-type automatically set to &quot;application/json&quot;
+    sub json_route {
+        return { error =&gt; 1,  message =&gt; &quot;Fail&quot; };
+    }</code></pre>
+
+<h3 id="Rendering-text">Rendering text</h3>
+
+<pre><code>    # Render simple text
+    $self-&gt;res-&gt;text-&gt;render(&quot;It works!&quot;);</code></pre>
+
+<h3 id="Rendering-HTML">Rendering HTML</h3>
+
+<pre><code>    $self-&gt;res-&gt;html-&gt;render(&quot;&lt;h1&gt;It works!&lt;/h1&gt;&quot;);</code></pre>
+
+<h3 id="Custom-content-type">Custom content type</h3>
+
+<pre><code>    $self-&gt;res-&gt;set_content_type(&#39;image/png&#39;);</code></pre>
+
+<h3 id="Return-404-or-500-errors">Return 404 or 500 errors</h3>
+
+<pre><code>    sub some_route {
+        my $self = shift;
+        if ($missing) {
+            return $self-&gt;res-&gt;render_404;
+        }
+        if ($broken) {
+            return $self-&gt;res-&gt;render_500;
+        }
+    }</code></pre>
+
+<h3 id="Templates">Templates</h3>
+
+<pre><code>    sub hello {
+        my ( $self, $name ) = @_;
+        $self-&gt;res-&gt;template( &#39;hello.tt&#39;, { name =&gt; $name } );
+    }</code></pre>
+
+<p>The above example will render the contents of <code>hello.tt</code>, and it will set the content-type to <code>text/html</code>. To set a different content-type, use <code>set_content_type</code> or any of its aliases:</p>
+
+<pre><code>    sub hello_txt {
+        my ( $self, $name ) = @_;
+        $self-&gt;res-&gt;text-&gt;template( &#39;hello_txt.tt&#39;, { name =&gt; $name } );
+    }</code></pre>
+
+<h3 id="Headers">Headers</h3>
+
+<pre><code>    $self-&gt;set_header( &quot;X-Framework&quot;, &quot;Kelp&quot; )-&gt;render( { success =&gt; \1 } );</code></pre>
+
+<h3 id="Delayed-responses">Delayed responses</h3>
+
+<p>To send a delayed response, have your route return a subroutine.</p>
+
+<pre><code>    sub delayed {
+        my $self = shift;
+        return sub {
+            my $responder = shift;
+            $self-&gt;res-&gt;code(200);
+            $self-&gt;res-&gt;text-&gt;body(&quot;Better late than never.&quot;);
+            $responder-&gt;($self-&gt;res-&gt;finalize);
+        };
+    }</code></pre>
+
+<p>See the <a>PSGI</a> pod for more information and examples.</p>
+
+<h1 id="ATTRIBUTES">ATTRIBUTES</h1>
+
+<h2 id="host">host</h2>
+
+<p>Gets the current hostname.</p>
+
+<pre><code>    sub some_route {
+        my $self = shift;
+        if ( $self-&gt;hostname eq &#39;prod-host&#39; ) {
+            ...
+        }
+    }</code></pre>
+
+<h2 id="mode">mode</h2>
+
+<p>Sets or gets the current mode. The mode is important for the app to know what configuration file to merge into the main configuration. See <a>Kelp::Module::Config</a> for more information.</p>
+
+<pre><code>    my $app = MyApp-&gt;new( mode =&gt; &#39;development&#39; );
+    # conf/myapp.conf and conf/myapp_development.conf are merged with priority
+    # given to the second one.</code></pre>
+
+<h2 id="path">path</h2>
+
+<p>Gets the current path of the application. That would be the path to <code>app.psgi</code></p>
+
+<h2 id="name">name</h2>
+
+<p>Gets or sets the name of the application. If not set, the name of the main module will be used.</p>
+
+<pre><code>    my $app = MyApp-&gt;new( name =&gt; &#39;Twittar&#39; );</code></pre>
+
+<p>The <code>name</code> is used to look for configuration files. In the above example, the app will look for <code>conf/twittar.conf</code> and <code>conf/twittar_*.conf</code> files.</p>
+
+<h2 id="charset">charset</h2>
+
+<p>Sets of gets the encoding charset of the app. It will be <code>UTF-8</code>, if not set to anything else. The charset could also be changed in the config files.</p>
+
+<h2 id="req">req</h2>
+
+<p>This attribute only makes sense if called within a route definition. It will contain a reference to the current <a>Kelp::Request</a> instance.</p>
+
+<pre><code>    sub some_route {
+        my $self = shift;
+        if ( $self-&gt;req-&gt;is_json ) {
+            ...
+        }
+    }</code></pre>
+
+<h2 id="res">res</h2>
+
+<p>This attribute only makes sense if called within a route definition. It will contain a reference to the current <a>Kelp::Response</a> instance.</p>
+
+<pre><code>    sub some_route {
+        my $self = shift;
+        $self-&gt;res-&gt;json-&gt;render( { success =&gt; 1 } );
+    }</code></pre>
+
+<h1 id="METHODS">METHODS</h1>
+
+<h2 id="build">build</h2>
+
+<p>On it&#39;s own the <code>build</code> method doesn&#39;t do anything. It is called by the constructor, so it can be overridden to add route destinations and initializations.</p>
+
+<pre><code>    package MyApp;
+
+    sub build {
+        my $self = shift;
+        my $r = $self-&gt;routes;
+
+        # Load some modules
+        $self-&gt;load_module(&quot;MongoDB&quot;);
+        $self-&gt;load_module(&quot;Validate&quot;);
+
+        # Add all route destinations
+        $r-&gt;add(&quot;/one&quot;, &quot;one&quot;);
+        ...
+
+    }</code></pre>
+
+<h2 id="load_module">load_module</h2>
+
+<p>Used to load a module. All modules must be under the <code>Kelp::Module::</code> namespace.</p>
+
+<pre><code>    $self-&gt;load_module(&quot;Redis&quot;);
+    # Will look for an load Kelp::Module::Redis</code></pre>
+
+<p>See <a>Kelp::Module</a> for more information on making and using modules.</p>
+
+<h2 id="request">request</h2>
+
+<p>This method is used to create the request object for each HTTP request. It returns and instance of <a>Kelp::Request</a>, initialized with the current requests environment. You can override this method to use a custom request module.</p>
+
+<pre><code>    package MyApp;
+    use MyApp::Request;
+
+    sub request {
+        my ( $self, $env ) = @_;
+        return MyApp::Requst-&gt;new( app =&gt; $app, env =&gt; $env );
+    }
+
+    # Now each request will be handled by MyApp::Request</code></pre>
+
+<h2 id="response">response</h2>
+
+<p>This method creates the response object, e.g. what an HTTP request will return. By default the object created is <a>Kelp::Response</a>. Much like <a href="#request">&quot;request&quot;</a>, the response can also be overridden to use a custom response object.</p>
+
+<h2 id="run">run</h2>
+
+<p>This method builds and returns the PSGI app. You can override it in order to include middleware. See <a href="#Adding-middleware">&quot;Adding middleware&quot;</a> for an example.</p>
+
+<h2 id="param">param</h2>
+
+<p>A shortcut to <code>$self-&gt;req-&gt;param</code>:</p>
+
+<pre><code>    sub some_route {
+        my $self = shift;
+        if ( $self-&gt;param(&#39;age&#39;) &gt; 18 ) {
+            $self-&gt;can_watch_south_path(1);
+        }
+    }</code></pre>
+
+<p>See <a>Kelp::Request</a> for more information and examples.</p>
+
+<h2 id="stash">stash</h2>
+
+<p>Provides safe access to <code>$self-&gt;req-&gt;stash</code>. When called without arguments, it will return the stash hash. If called with a single argument, it will return the value of the corresponding key in the stash. See <a>&quot;stash&quot; in Kelp::Request</a> for more information and examples.</p>
+
+<h2 id="named">named</h2>
+
+<p>Provides safe access to <code>$self-&gt;req-&gt;named</code>. When called without arguments, it will return the named hash. If called with a single argument, it will return the value of the corresponding key in the named hash. See <a>&quot;named&quot; in Kelp::Request</a> for more information and examples.</p>
+
+<h2 id="url_for">url_for</h2>
+
+<p>A safe shortcut to <code>$self-&gt;routes-&gt;url</code>. Builds a URL from path and arguments.</p>
+
+<pre><code>    sub build {
+        my $self = shift;
+        $self-&gt;routes-&gt;add(&quot;/:name/:id&quot;, { name =&gt; &#39;name&#39;, to =&gt; sub {
+            ...
+        }});
+    }
+
+    sub check {
+        my $self = shift;
+        my $url_for_name = $self-&gt;url_for(&#39;name&#39;, name =&gt; &#39;jake&#39;, id =&gt; 1003);
+        $self-&gt;res-&gt;redirect_to();
+    }</code></pre>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a>Kelp</a></p>
+
+<h1 id="CREDITS">CREDITS</h1>
+
+<p>Author: minimalist - minimal@cpan.org</p>
+
+<h1 id="LICENSE">LICENSE</h1>
+
+<p>Same as Perl itself.</p>
+
+
+</body>
+
+</html>
+
+

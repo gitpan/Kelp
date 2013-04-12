@@ -1,0 +1,482 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title></title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body style="background-color: white">
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#PLACEHOLDERS">PLACEHOLDERS</a>
+    <ul>
+      <li><a href="#Explicit">Explicit</a></li>
+      <li><a href="#Optional">Optional</a></li>
+      <li><a href="#Wildcards">Wildcards</a></li>
+      <li><a href="#Using-curly-braces">Using curly braces</a></li>
+    </ul>
+  </li>
+  <li><a href="#BRIDGES">BRIDGES</a></li>
+  <li><a href="#TREES">TREES</a></li>
+  <li><a href="#ATTRIBUTES">ATTRIBUTES</a>
+    <ul>
+      <li><a href="#base">base</a></li>
+    </ul>
+  </li>
+  <li><a href="#SUBROUTINES">SUBROUTINES</a>
+    <ul>
+      <li><a href="#add">add</a>
+        <ul>
+          <li><a href="#Destination-Options">Destination Options</a>
+            <ul>
+              <li><a href="#to">to</a></li>
+              <li><a href="#via">via</a></li>
+              <li><a href="#name">name</a></li>
+              <li><a href="#check">check</a></li>
+              <li><a href="#defaults">defaults</a></li>
+              <li><a href="#bridge">bridge</a></li>
+              <li><a href="#tree">tree</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><a href="#match">match</a></li>
+    </ul>
+  </li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#CREDITS">CREDITS</a></li>
+  <li><a href="#ACKNOWLEDGEMENTS">ACKNOWLEDGEMENTS</a></li>
+  <li><a href="#LICENSE">LICENSE</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>Kelp::Routes - Routing for a Kelp app</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code>    my $r = Kelp::Routes-&gt;new( base =&gt; &#39;MyApp&#39; );
+
+    # Simple
+    $r-&gt;add( &#39;/home&#39;, &#39;home&#39; );
+
+    # With method
+    $r-&gt;add( [ POST =&gt; &#39;/item&#39; ], &#39;items#add&#39; );
+
+    # Captures
+    $r-&gt;add( &#39;/user/:id&#39;,     &#39;user#view&#39; );       # Required
+    $r-&gt;add( &#39;/pages/?id&#39;,    &#39;pages#view&#39; );      # Optional
+    $r-&gt;add( &#39;/*article/:id&#39;, &#39;articles#view&#39; );   # Wildcard
+
+    # Extended options
+    $r-&gt;add(
+        &#39;/resource/:id&#39; =&gt; {
+            via   =&gt; &#39;GET&#39;,               # match only GET
+            to    =&gt; &#39;resources#view&#39;,    # send to MyApp::Resources::View
+            check =&gt; { id =&gt; &#39;\d+&#39; },     # match only id =~ /\d+/
+            name  =&gt; &#39;resource&#39;           # name this route &#39;resource&#39;
+        }
+    );
+
+    # URL building
+    say $r-&gt;url( &#39;resource&#39;, id =&gt; 100 );    # &#39;/resource/100&#39;
+
+    # Bridges
+    $r-&gt;add(
+        &#39;/users&#39;, {
+            to     =&gt; &#39;users#auth&#39;,
+            bridge =&gt; 1
+        }
+    );
+    $r-&gt;add( &#39;/users/edit&#39; =&gt; &#39;user#edit&#39; );
+    # Will go through the bridge code first
+
+    # Nested routes and bridges
+    $r-&gt;add(
+        &#39;/users&#39; =&gt; {
+            to   =&gt; &#39;users#auth&#39;,
+            tree =&gt; [
+                &#39;/home&#39; =&gt; &#39;users#home&#39;,
+                [ POST =&gt; &#39;/edit&#39; ] =&gt; &#39;users#edit&#39;,
+                &#39;/prefs&#39; =&gt; {
+                    to   =&gt; &#39;users#prefs&#39;,
+                    tree =&gt; [
+                        &#39;/email&#39; =&gt; &#39;users#prefs#email&#39;,
+                        &#39;/login&#39; =&gt; &#39;users#prefs#login&#39;
+                    ]
+                }
+            ]
+        }
+    );</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>Routing is at the core of each web application. It provides the connection between each HTTP request and the code.</p>
+
+<p>Kelp provides a simple, yet sophisticated router. It utilizes Perl 5.10&#39;s regular expressions, which makes it fast, robust and reliable.</p>
+
+<p>The routing process can roughly be broken down into three steps:</p>
+
+<dl>
+
+<dt id="Adding-routes"><b>Adding routes</b></dt>
+<dd>
+
+<p>First you create a router object:</p>
+
+<pre><code>    my $r = Kelp::Routes-&gt;new();</code></pre>
+
+<p>Then you add your application&#39;s routes and their descriptions:</p>
+
+<pre><code>    $r-&gt;add( &#39;/path&#39; =&gt; &#39;Module::function&#39; );
+    ...</code></pre>
+
+</dd>
+<dt id="Matching"><b>Matching</b></dt>
+<dd>
+
+<p>Once you have your routes added, you can match with the <a href="#match">&quot;match&quot;</a> subroutine.</p>
+
+<pre><code>    $r-&gt;match( $path, $method );</code></pre>
+
+<p>The Kelp framework already does matching for you, so you may never have to do your own matching. The above example is provided only for reference.</p>
+
+</dd>
+<dt id="Building-URLs-from-routes"><b>Building URLs from routes</b></dt>
+<dd>
+
+<p>You can name each of your routes and use that later to build a URL:</p>
+
+<pre><code>    $r-&gt;add( &#39;/begin&#39; =&gt; { to =&gt; &#39;function&#39;, name =&gt; &#39;home&#39; } );
+    my $url = $r-&gt;url(&#39;home&#39;);    # /begin</code></pre>
+
+<p>This can be used in views and other places where you need the full URL of a route.</p>
+
+</dd>
+</dl>
+
+<h1 id="PLACEHOLDERS">PLACEHOLDERS</h1>
+
+<p>Each route is matched via a regular expression. You can write your own regular expressions or you can use Kelp&#39;s <i>placeholders</i>. Placeholders are variables you place in the route path. They are identified by a prefix character and their names must abide to the rules of a regular perl variable. If necessary, curly braces can be used to separate placeholders from the rest of the path.</p>
+
+<p>There are three types of place holders: explicit, optional and wildcards.</p>
+
+<h2 id="Explicit">Explicit</h2>
+
+<p>These placeholders begin with a column (<code>:</code>) and must have a value in order for the route to match. All characters are matched, except for the forward slash.</p>
+
+<pre><code>    $r-&gt;add( &#39;/user/:id&#39; =&gt; &#39;module#sub&#39; );
+    # /user/a       -&gt; match (id = &#39;a&#39;)
+    # /user/123     -&gt; match (id = 123)
+    # /user/        -&gt; no match
+    # /user         -&gt; no match
+    # /user/10/foo  -&gt; no match
+
+    $r-&gt;add( &#39;/page/:page/line/:line&#39; =&gt; &#39;module#sub&#39; );
+    # /page/1/line/2        -&gt; match (page = 1, line = 2)
+    # /page/bar/line/foo    -&gt; match (page = &#39;bar&#39;, line = &#39;foo&#39;)
+    # /page/line/4          -&gt; no match
+    # /page/5               -&gt; no match
+
+    $r-&gt;add( &#39;/{:a}ing/{:b}ing&#39; =&gt; &#39;module#sub&#39; );
+    # /walking/singing      -&gt; match (a = &#39;walk&#39;, b = &#39;sing&#39;)
+    # /cooking/ing          -&gt; no match
+    # /ing/ing              -&gt; no match</code></pre>
+
+<h2 id="Optional">Optional</h2>
+
+<p>Optional placeholders begin with a question mark <code>?</code> and denote an optional value. You may also specify a default value for the optional placeholder via the <a href="#defaults">&quot;defaults&quot;</a> option. Again, like the explicit placeholders, the optional ones capture all characters, except the forward slash.</p>
+
+<pre><code>    $r-&gt;add( &#39;/data/?id&#39; =&gt; &#39;module#sub&#39; );
+    # /bar/foo          -&gt; match ( id = &#39;foo&#39; )
+    # /bar/             -&gt; match ( id = undef )
+    # /bar              -&gt; match ( id = undef )
+
+    $r-&gt;add( &#39;/:a/?b/:c&#39; =&gt; &#39;module#sub&#39; );
+    # /bar/foo/baz      -&gt; match ( a = &#39;bar&#39;, b = &#39;foo&#39;, c = &#39;baz&#39; )
+    # /bar/foo          -&gt; match ( a = &#39;bar&#39;, b = undef, c = &#39;foo&#39; )
+    # /bar              -&gt; no match
+    # /bar/foo/baz/moo  -&gt; no match</code></pre>
+
+<p>Optional default values may be specified via the <code>defaults</code> option.</p>
+
+<pre><code>    $r-&gt;add(
+        &#39;/user/?name&#39; =&gt; {
+            to       =&gt; &#39;module#sub&#39;,
+            defaults =&gt; { name =&gt; &#39;hank&#39; }
+        }
+    );
+
+    # /user             -&gt; match ( name = &#39;hank&#39; )
+    # /user/            -&gt; match ( name = &#39;hank&#39; )
+    # /user/jane        -&gt; match ( name = &#39;jane&#39; )
+    # /user/jane/cho    -&gt; no match</code></pre>
+
+<h2 id="Wildcards">Wildcards</h2>
+
+<p>The wildcard placeholders expect a value and capture all characters, including the forward slash.</p>
+
+<pre><code>    $r-&gt;add( &#39;/:a/*b/:c&#39;  =&gt; &#39;module#sub&#39; );
+    # /bar/foo/baz/bat  -&gt; match ( a = &#39;bar&#39;, b = &#39;foo/baz&#39;, c = &#39;bat&#39; )
+    # /bar/bat          -&gt; no match</code></pre>
+
+<h2 id="Using-curly-braces">Using curly braces</h2>
+
+<p>Curly braces may be used to separate the placeholders from the rest of the path:</p>
+
+<pre><code>    $r-&gt;add( &#39;/{:a}ing/{:b}ing&#39; =&gt; &#39;module#sub&#39; );
+    # /looking/seeing       -&gt; match ( a = &#39;look&#39;, b = &#39;see&#39; )
+    # /ing/ing              -&gt; no match
+
+    $r-&gt;add( &#39;/:a/{?b}ing&#39; =&gt; &#39;module#sub&#39; );
+    # /bar/hopping          -&gt; match ( a = &#39;bar&#39;, b = &#39;hopp&#39; )
+    # /bar/ing              -&gt; match ( a = &#39;bar&#39; )
+    # /bar                  -&gt; no match
+
+    $r-&gt;add( &#39;/:a/{*b}ing/:c&#39; =&gt; &#39;module#sub&#39; );
+    # /bar/hop/ping/foo     -&gt; match ( a = &#39;bar&#39;, b = &#39;hop/p&#39;, c = &#39;foo&#39; )
+    # /bar/ing/foo          -&gt; no match</code></pre>
+
+<h1 id="BRIDGES">BRIDGES</h1>
+
+<p>The <a href="#match">&quot;match&quot;</a> subroutine will stop and return the route that best matches the specified path. If that route is marked as a bridge, then <a href="#match">&quot;match&quot;</a> will continue looking for a match and will eventually return an array of one or more routes. Bridges can be used for authentication or other route preprocessing.</p>
+
+<pre><code>    $r-&gt;add( &#39;/users&#39;, { to =&gt; &#39;Users::auth&#39;, bridge =&gt; 1 } );
+    $r-&gt;add( &#39;/users/:action&#39; =&gt; &#39;Users::dispatch&#39; );</code></pre>
+
+<p>The above example will require <i>/users/profile</i> to go through two controllers: <code>Users::auth</code> and <code>Users::dispatch</code>:</p>
+
+<pre><code>    my $arr = $r-&gt;match(&#39;/users/view&#39;);
+    # $arr is an array of two routes now, the bridge and the last one matched</code></pre>
+
+<h1 id="TREES">TREES</h1>
+
+<p>A quick way to add bridges is to use the <a href="#tree">&quot;tree&quot;</a> option. It allows you to define all routes under a bridge. Example:</p>
+
+<pre><code>    $r-&gt;add(
+        &#39;/users&#39; =&gt; {
+            to   =&gt; &#39;users#auth&#39;,
+            name =&gt; &#39;users&#39;,
+            tree =&gt; [
+                &#39;/profile&#39; =&gt; {
+                    name =&gt; &#39;profile&#39;,
+                    to   =&gt; &#39;users#profile&#39;
+                },
+                &#39;/settings&#39; =&gt; {
+                    name =&gt; &#39;settings&#39;,
+                    to   =&gt; &#39;users#settings&#39;,
+                    tree =&gt; [
+                        &#39;/email&#39; =&gt; { name =&gt; &#39;email&#39;, to =&gt; &#39;users#email&#39; },
+                        &#39;/login&#39; =&gt; { name =&gt; &#39;login&#39;, to =&gt; &#39;users#login&#39; }
+                    ]
+                }
+            ]
+        }
+    );</code></pre>
+
+<p>The above call to <code>add</code> causes the following to occur under the hood:</p>
+
+<ul>
+
+<li><p>The paths of all routes inside the tree are joined to the path of their parent, so the following five new routes are created:</p>
+
+<pre><code>    /users                  -&gt; MyApp::Users::auth
+    /users/profile          -&gt; MyApp::Users::profile
+    /users/settings         -&gt; MyApp::Users::settings
+    /users/settings/email   -&gt; MyApp::Users::email
+    /users/settings/login   -&gt; MyApp::Users::login</code></pre>
+
+</li>
+<li><p>The names of the routes are joined with <code>_</code> to the name of their parent:</p>
+
+<pre><code>    /users                  -&gt; &#39;users&#39;
+    /users/profile          -&gt; &#39;users_profile&#39;
+    /users/settings         -&gt; &#39;users_settings&#39;
+    /users/settings/email   -&gt; &#39;users_settings_email&#39;
+    /users/settings/login   -&gt; &#39;users_settings_login&#39;</code></pre>
+
+</li>
+<li><p>The <code>/users</code> and <code>/users/settings</code> routes are automatically marked as bridges, because they contain a tree.</p>
+
+</li>
+</ul>
+
+<h1 id="ATTRIBUTES">ATTRIBUTES</h1>
+
+<h2 id="base">base</h2>
+
+<p>Sets the base class for the routes destinations.</p>
+
+<pre><code>    my $r = Kelp::Routes-&gt;new( base =&gt; &#39;MyApp&#39; );</code></pre>
+
+<p>This will prepend <code>MyApp::</code> to all route destinations.</p>
+
+<pre><code>    $r-&gt;add( &#39;/home&#39; =&gt; &#39;home&#39; );          # /home -&gt; MyApp::home
+    $r-&gt;add( &#39;/user&#39; =&gt; &#39;user#home&#39; );     # /user -&gt; MyApp::User::home
+    $r-&gt;add( &#39;/view&#39; =&gt; &#39;User::view&#39; );    # /view -&gt; MyApp::User::view</code></pre>
+
+<p>By default this value is an empty string and it will not prepend anything. However, if it is set, then it will always be used. If you need to use a route located in another package, you&#39;ll have to wrap it in a local sub:</p>
+
+<pre><code>    # Problem:
+
+    $r-&gt;add( &#39;/outside&#39; =&gt; &#39;Outside::Module::route&#39; );
+    # /outside -&gt; MyApp::Outside::Module::route
+    # (most likely not what you want)
+
+    # Solution:
+
+    $r-&gt;add( &#39;/outside&#39; =&gt; &#39;outside&#39; );
+    ...
+    sub outside {
+        return Outside::Module::route;
+    }</code></pre>
+
+<h1 id="SUBROUTINES">SUBROUTINES</h1>
+
+<h2 id="add">add</h2>
+
+<p>Adds a new route definition to the routes array.</p>
+
+<pre><code>    $r-&gt;add( $path, $destination );</code></pre>
+
+<p><code>$path</code> can be a path string, e.g. <code>&#39;/user/view&#39;</code> or an ARRAY containing a method and a path, e.g. <code>[ PUT =&gt; &#39;/item&#39; ]</code>.</p>
+
+<p><code>$destination</code> can be a destination string, e.g. <code>&#39;Users::item&#39;</code>, a hash containing more options or a CODE reference:</p>
+
+<pre><code>    my $r = Kelp::Routes-&gt;new( base =&gt; &#39;MyApp&#39; );
+
+    # /home -&gt; MyApp::User::home
+    $r-&gt;add( &#39;/home&#39; =&gt; &#39;user#home&#39; );
+
+    # GET /item/100 -&gt; MyApp::Items::view
+    $r-&gt;add(
+        &#39;/item/:id&#39;, {
+            to  =&gt; &#39;items#view&#39;,
+            via =&gt; &#39;GET&#39;
+        }
+    );
+
+    # /system -&gt; CODE
+    $r-&gt;add( &#39;/system&#39; =&gt; sub { return \%ENV } );</code></pre>
+
+<h3 id="Destination-Options">Destination Options</h3>
+
+<h4 id="to">to</h4>
+
+<p>Sets the destination for the route. It should be a subroutine name or CODE reference. It could also be a shortcut, in which case it will get properly camelized.</p>
+
+<pre><code>    $r-&gt;add( &#39;/user&#39; =&gt; &#39;users#home&#39; );       # /home -&gt; MyApp::Users::home
+    $r-&gt;add( &#39;/sys&#39;  =&gt; sub { ... } );        # /sys -&gt; execute code
+    $r-&gt;add( &#39;/item&#39; =&gt; &#39;Items::handle&#39; );    # /item -&gt; MyApp::Items::handle
+    $r-&gt;add( &#39;/item&#39; =&gt; { to =&gt; &#39;Items::handle&#39; } );    # Same as above</code></pre>
+
+<h4 id="via">via</h4>
+
+<p>Specifies an HTTP method to be considered by <a href="#match">&quot;match&quot;</a> when matching a route.</p>
+
+<pre><code>    # POST /item -&gt; MyApp::Items::add
+    $r-&gt;add(
+        &#39;/item&#39; =&gt; {
+            via =&gt; &#39;POST&#39;,
+            to  =&gt; &#39;items#add&#39;
+        }
+    );</code></pre>
+
+<p>The above can be shortened with like this:</p>
+
+<pre><code>    $r-&gt;add( [ POST =&gt; &#39;/item&#39; ] =&gt; &#39;items#add&#39; );</code></pre>
+
+<h4 id="name">name</h4>
+
+<p>Give the route a name, that can be used to build a URL later via the <a href="#url">&quot;url&quot;</a> subroutine.</p>
+
+<pre><code>    $r-&gt;add(
+        &#39;/item/:id/:name&#39; =&gt; {
+            to   =&gt; &#39;items#view&#39;,
+            name =&gt; &#39;item&#39;
+        }
+    );
+
+    # Later
+    $r-&gt;url( &#39;item&#39;, id =&gt; 8, name =&gt; &#39;foo&#39; );    # /item/8/foo</code></pre>
+
+<h4 id="check">check</h4>
+
+<p>A hashref of checks to perform on the captures. It should contain capture names and stringified regular expressions. Do not use <code>^</code> and <code>$</code> to denote beginning and ending of the matched expression, because it will get embedded in a bigger Regexp.</p>
+
+<pre><code>    $r-&gt;add(
+        &#39;/item/:id/:name&#39; =&gt; {
+            to    =&gt; &#39;items#view&#39;,
+            check =&gt; {
+                id   =&gt; &#39;\d+&#39;,          # id must be a digit
+                name =&gt; &#39;open|close&#39;    # name can be &#39;open&#39; or &#39;close&#39;
+            }
+          }
+    );</code></pre>
+
+<h4 id="defaults">defaults</h4>
+
+<p>Set default values for optional placeholders.</p>
+
+<pre><code>    $r-&gt;add(
+        &#39;/pages/?id&#39; =&gt; {
+            to       =&gt; &#39;pages#view&#39;,
+            defaults =&gt; { id =&gt; 2 }
+        }
+    );
+
+    # /pages    -&gt; match ( id = 2 )
+    # /pages/   -&gt; match ( id = 2 )
+    # /pages/4  -&gt; match ( id = 4 )</code></pre>
+
+<h4 id="bridge">bridge</h4>
+
+<p>If set to one this route will be treated as a bridge. Please see <a href="#bridges">&quot;bridges&quot;</a> for more information.</p>
+
+<h4 id="tree">tree</h4>
+
+<p>Creates a tree of sub-routes. See <a href="#trees">&quot;trees&quot;</a> for more information and examples.</p>
+
+<h2 id="match">match</h2>
+
+<p>Returns an array of <a>Kelp::Routes::Pattern</a> objects that match the path and HTTP method provided. Each object will contain a hash with the named placeholders in <a>&quot;named&quot; in Kelp::Routes::Pattern</a>, and an array with their values in the order they were specified in the pattern in <a>&quot;param&quot; in Kelp::Routes::Pattern</a>.</p>
+
+<pre><code>    $r-&gt;add( &#39;/:id/:name&#39;, &quot;route&quot; );
+    for my $pattern ( @{ $r-&gt;match(&#39;/15/alex&#39;) } ) {
+        $pattern-&gt;named;    # { id =&gt; 15, name =&gt; &#39;alex&#39; }
+        $pattern-&gt;param;    # [ 15, &#39;alex&#39; ]
+    }</code></pre>
+
+<p>Routes that used regular expressions instead of patterns will only initialize the <code>param</code> array with the regex captures, unless those patterns are using named captures in which case the <code>named</code> hash will also be initialized.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a>Kelp</a>, <a>Routes::Tiny</a>, <a>Forward::Routes</a></p>
+
+<h1 id="CREDITS">CREDITS</h1>
+
+<p>Author: minimalist - minimal@cpan.org</p>
+
+<h1 id="ACKNOWLEDGEMENTS">ACKNOWLEDGEMENTS</h1>
+
+<p>This module was inspired by <a>Routes::Tiny</a>.</p>
+
+<p>The concept of bridges was borrowed from <a>Mojolicious</a></p>
+
+<h1 id="LICENSE">LICENSE</h1>
+
+<p>Same as Perl itself.</p>
+
+
+</body>
+
+</html>
+
+
