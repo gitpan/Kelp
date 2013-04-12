@@ -1,5 +1,0 @@
-2013-03-30 11:15:05 - critical - CODE(0x175fe58) did not render for method GET
-2013-04-02 18:30:01 - critical - test is a read-only accessor at (eval 76) line 5.
-
-2013-04-02 18:30:43 - critical - test is a read-only accessor at (eval 76) line 5.
-
