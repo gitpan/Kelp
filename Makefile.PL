@@ -23,7 +23,6 @@ my %WriteMakefileArgs = (
   "NAME" => "Kelp",
   "PREREQ_PM" => {
     "Carp" => 0,
-    "Config::Hash" => 0,
     "Data::Dumper" => 0,
     "Encode" => 0,
     "File::Basename" => 0,
@@ -46,10 +45,11 @@ my %WriteMakefileArgs = (
     "warnings" => 0
   },
   "TEST_REQUIRES" => {
+    "Config::Hash" => 0,
     "HTTP::Request::Common" => 0,
     "Test::Exception" => 0
   },
-  "VERSION" => "0.11",
+  "VERSION" => "0.2",
   "test" => {
     "TESTS" => "t/*.t"
   }

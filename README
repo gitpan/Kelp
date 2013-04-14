@@ -138,8 +138,9 @@ CREATING A NEW WEB APP
          |
          |--/conf
          |   |--config.pl
-         |   |--config_test.pl
-         |   |--config_deployment.pl
+         |   |--test.pl
+         |   |--development.pl
+         |   |--deployment.pl
          |
          |--/view
          |--/log
@@ -154,10 +155,9 @@ CREATING A NEW WEB APP
         The "conf" folder is where Kelp will look for configuration files.
         You need one main file, named "config.pl". You can also add other
         files that define different running environments, if you name them
-        "config_"*environment*".pl". Replace *environment* with the actual
-        name of the environment. To change the running environment, you can
-        specify the app "mode", or you can set the "KELP_ENV" environment
-        variable.
+        *environment*".pl". Replace *environment* with the actual name of
+        the environment. To change the running environment, you can specify
+        the app "mode", or you can set the "PLACK_ENV" environment variable.
 
             my $app = MyApp->new( mode => 'development' );
 
@@ -379,7 +379,7 @@ CREATING A NEW WEB APP
     file and the corresponding initializing arguments in the
     "middleware_init" hash:
 
-        # conf/config_development.pl
+        # conf/development.pl
         {
             middleware      => [qw/Session Debug/],
             middleware_init => {
@@ -453,10 +453,10 @@ CREATING A NEW WEB APP
 
     *   First, we create an instance of the web application class, which we
         have previously built and placed in the "lib/" folder. We set the
-        mode of the app to "test", so that file "conf/config_test.pl"
-        overrides the main configuration. The test configuration can contain
-        anything you see fit. Perhaps you want to disable certain modules,
-        or maybe you want to make DBI connect to a different database.
+        mode of the app to "test", so that file "conf/test.pl" overrides the
+        main configuration. The test configuration can contain anything you
+        see fit. Perhaps you want to disable certain modules, or maybe you
+        want to make DBI connect to a different database.
 
     *   Second, we create an instance of the "Kelp::Test" class and tell it
         that it will perform all tests using our $app instance.
@@ -618,8 +618,15 @@ ATTRIBUTES
     Kelp::Module::Config for more information.
 
         my $app = MyApp->new( mode => 'development' );
-        # conf/config.pl and conf/config_development.pl are merged with priority
+        # conf/config.pl and conf/development.pl are merged with priority
         # given to the second one.
+
+  config_module
+    Sets of gets the class of the configuration module to be loaded on
+    startup. The default value is "Config", which will cause the
+    "Kelp::Module::Config" to get loaded. See the documentation for
+    Kelp::Module::Config for more information and for an example of how to
+    create and use other config modules.
 
   path
     Gets the current path of the application. That would be the path to

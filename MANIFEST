@@ -1,3 +1,4 @@
+Changes
 LICENSE
 MANIFEST
 META.yml
@@ -5,15 +6,15 @@ Makefile.PL
 README
 README.md
 bin/Kelp
-conf/config.pl
-conf/config_nomod.pl
-conf/config_test.pl
+conf/nomod.pl
+conf/test.pl
 dist.ini
 lib/Kelp.pm
 lib/Kelp/Base.pm
 lib/Kelp/Less.pm
 lib/Kelp/Module.pm
 lib/Kelp/Module/Config.pm
+lib/Kelp/Module/Config/Null.pm
 lib/Kelp/Module/JSON.pm
 lib/Kelp/Module/Logger.pm
 lib/Kelp/Module/Null.pm
@@ -26,6 +27,13 @@ lib/Kelp/Routes/Pattern.pm
 lib/Kelp/Test.pm
 log/keep
 t/base.t
+t/conf/a/config.pl
+t/conf/b/config.pl
+t/conf/b/test.pl
+t/conf/c/test.pl
+t/conf/e/config.pl
+t/conf/f/config.pl
+t/conf/null/config.null
 t/less.t
 t/lib/MyApp.pm
 t/lib/MyApp/Response.pm
@@ -33,6 +41,9 @@ t/log/keep
 t/middleware.t
 t/module.t
 t/module_config.t
+t/module_config_get.t
+t/module_config_merge.t
+t/module_config_null.t
 t/module_json.t
 t/module_logger.t
 t/module_template.t
@@ -48,5 +59,3 @@ t/routes_match.t
 t/routes_url.t
 t/run.t
 t/subclassed.t
-t/test.psgi
-t/test_psgi.t
