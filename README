@@ -254,10 +254,10 @@ CREATING A NEW WEB APP
 
   Routing
     Kelp uses a powerful and very flexible router. Traditionally, it is also
-    light and consists of less than 300 lines of loose code (commends
-    included). You are encouraged to read Kelp::Routes, but here are some
-    key points. All examples are assumed to be inside the "build" method and
-    $r is equal to "$self->routes":
+    light and consists of less than 300 lines of code (comments included).
+    You are encouraged to read Kelp::Routes, but here are some key points.
+    All examples are assumed to be inside the "build" method and $r is equal
+    to "$self->routes":
 
    Destinations
     You can direct HTTP paths to subroutines in your classes or, you can use

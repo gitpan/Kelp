@@ -33,7 +33,6 @@ requires:
   Test::Deep: 0
   Test::More: 0
   Try::Tiny: 0
-  base: 0
   feature: 0
   perl: v5.10.0
   strict: 0
@@ -41,4 +40,4 @@ requires:
 resources:
   homepage: https://github.com/naturalist/kelp
   repository: https://github.com/naturalist/kelp.git
-version: 0.2
+version: 0.21

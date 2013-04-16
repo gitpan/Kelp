@@ -59,3 +59,6 @@ t/routes_match.t
 t/routes_url.t
 t/run.t
 t/subclassed.t
+t/test.psgi
+t/test_psgi.t
+t/views/home.tt

@@ -39,7 +39,6 @@ my %WriteMakefileArgs = (
     "Test::Deep" => 0,
     "Test::More" => 0,
     "Try::Tiny" => 0,
-    "base" => 0,
     "feature" => 0,
     "strict" => 0,
     "warnings" => 0
@@ -49,7 +48,7 @@ my %WriteMakefileArgs = (
     "HTTP::Request::Common" => 0,
     "Test::Exception" => 0
   },
-  "VERSION" => "0.2",
+  "VERSION" => "0.21",
   "test" => {
     "TESTS" => "t/*.t"
   }
