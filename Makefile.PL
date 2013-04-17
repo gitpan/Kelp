@@ -44,11 +44,10 @@ my %WriteMakefileArgs = (
     "warnings" => 0
   },
   "TEST_REQUIRES" => {
-    "Config::Hash" => 0,
     "HTTP::Request::Common" => 0,
     "Test::Exception" => 0
   },
-  "VERSION" => "0.216",
+  "VERSION" => "0.217",
   "test" => {
     "TESTS" => "t/*.t"
   }

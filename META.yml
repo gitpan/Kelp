@@ -3,7 +3,6 @@ abstract: 'A web framework light, yet rich in nutrients.'
 author:
   - 'Stefan Geneshky <minimal@cpan.org>'
 build_requires:
-  Config::Hash: 0
   HTTP::Request::Common: 0
   Test::Exception: 0
 configure_requires:
@@ -40,4 +39,4 @@ requires:
 resources:
   homepage: https://github.com/naturalist/kelp
   repository: https://github.com/naturalist/kelp.git
-version: 0.216
+version: 0.217
