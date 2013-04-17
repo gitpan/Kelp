@@ -20,6 +20,7 @@ lib/Kelp/Module/Logger.pm
 lib/Kelp/Module/Null.pm
 lib/Kelp/Module/Routes.pm
 lib/Kelp/Module/Template.pm
+lib/Kelp/Module/Template/Null.pm
 lib/Kelp/Request.pm
 lib/Kelp/Response.pm
 lib/Kelp/Routes.pm
@@ -34,6 +35,7 @@ t/conf/c/test.pl
 t/conf/e/config.pl
 t/conf/f/config.pl
 t/conf/null/config.null
+t/conf/template/config.pl
 t/less.t
 t/lib/MyApp.pm
 t/lib/MyApp/Response.pm
@@ -47,6 +49,7 @@ t/module_config_null.t
 t/module_json.t
 t/module_logger.t
 t/module_template.t
+t/module_template_null.t
 t/pattern_build.t
 t/pattern_cache.t
 t/pattern_match.t

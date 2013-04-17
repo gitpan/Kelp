@@ -48,7 +48,7 @@ my %WriteMakefileArgs = (
     "HTTP::Request::Common" => 0,
     "Test::Exception" => 0
   },
-  "VERSION" => "0.21",
+  "VERSION" => "0.215",
   "test" => {
     "TESTS" => "t/*.t"
   }
