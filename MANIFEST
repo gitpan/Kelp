@@ -39,6 +39,8 @@ t/conf/template/config.pl
 t/less.t
 t/lib/MyApp.pm
 t/lib/MyApp/Response.pm
+t/lib/MyApp/Routes.pm
+t/lib/MyApp/Routes2.pm
 t/log/keep
 t/middleware.t
 t/module.t
