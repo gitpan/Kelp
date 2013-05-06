@@ -12,7 +12,7 @@ use Plack::Util;
 use Kelp::Request;
 use Kelp::Response;
 
-our $VERSION = 0.2182;
+our $VERSION = 0.2190;
 
 # Basic attributes
 attr -host => hostname;
@@ -180,7 +180,7 @@ sub psgi {
 
             # Handle delayed response if CODE
             return $data if ref($data) eq 'CODE';
-            $res->render($data) unless $res->is_rendered;
+            $res->render($data) unless $res->rendered;
         }
 
         # If no data returned at all, then croak with error.
@@ -897,6 +897,44 @@ C<set_content_type> or any of its aliases:
 
     $self->set_header( "X-Framework", "Kelp" )->render( { success => \1 } );
 
+=head3 Serving static files
+
+If you want to serve static pages, you can use the L<Plack::Middleware::Static>
+middleware that comes with Plack. Here is an example configuration that serves
+files in your C<public> folder (under the Kelp root folder) from URLs that
+begin with C</public>:
+
+    # conf/config.pl
+    {
+        middleware      => [qw/Static/],
+        middleware_init => {
+            Static => {
+                path => qr{^/public/},
+                root => '.',
+            }
+        }
+    };
+
+=head3 Uploading files
+
+File uploads are handled by L<Kelp::Request>, which inherits Plack::Request
+and has its C<uploads|Plack::Request/uploads> property. The uploads propery returns a
+reference to a hash containing all uploads.
+
+    sub upload {
+        my $self = shift;
+        my $uploads  = $self->req->uploads;
+
+        # Now $uploads is a hashref to all uploads
+        ...
+    }
+
+For L<Kelp::Less>, then you can use the C<req> reserved word:
+
+    get '/upload' => sub {
+        my $uploads = req->uploads;
+    };
+
 =head3 Delayed responses
 
 To send a delayed response, have your route return a subroutine.
@@ -1160,7 +1198,7 @@ arguments.
     sub check {
         my $self = shift;
         my $url_for_name = $self->url_for('name', name => 'jake', id => 1003);
-        $self->res->redirect_to();
+        $self->res->redirect_to( $url_for_name );
     }
 
 =head1 SUPPORT
@@ -1176,6 +1214,10 @@ arguments.
 =head1 AUTHOR
 
 Stefan Geneshky - minimal@cpan.org
+
+=head1 CONTRIBUTORS
+
+Gurunandan Bhat - gbhat@pobox.com
 
 =head1 LICENSE
 

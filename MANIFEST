@@ -58,6 +58,7 @@ t/pattern_match.t
 t/release-pod-syntax.t
 t/request.t
 t/response.t
+t/response_finalize.t
 t/routes_add.t
 t/routes_camelize.t
 t/routes_match.t
