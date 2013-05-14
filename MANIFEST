@@ -49,6 +49,7 @@ t/module_config_get.t
 t/module_config_merge.t
 t/module_config_null.t
 t/module_json.t
+t/module_load.t
 t/module_logger.t
 t/module_template.t
 t/module_template_null.t

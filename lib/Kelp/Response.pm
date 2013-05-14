@@ -130,9 +130,9 @@ Kelp::Response - Format an HTTP response
 
 =head1 SYNOPSIS
 
-Examples of route definitions make a lot more sense when showing how to use this
-module. Note that in the below examples C<$self-E<gt>res> is an instance of
-C<Kelp::Response>:
+Examples of how to use this module make a lot more sense when shown inside
+route definitions. Note that in the below examples C<$self-E<gt>res>
+is an instance of C<Kelp::Response>:
 
     # Render simple text
     sub text {
@@ -183,7 +183,7 @@ unless you know what you're doing, we recommend that you do not use it.
 
 Sets partial response. If this attribute is set to a true value, it will cause
 C<finalize> to return the HTTP status code and headers, but not the body. This is
-convenient if you intend to stream your content. It the following example, we
+convenient if you intend to stream your content. In the following example, we
 set C<partial> to 1 and use C<finalize> to get a C<writer> object for streaming.
 
     sub stream {
