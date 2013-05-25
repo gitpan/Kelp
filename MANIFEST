@@ -65,6 +65,8 @@ t/routes_camelize.t
 t/routes_match.t
 t/routes_url.t
 t/run.t
+t/run_bridge.t
+t/run_panic.t
 t/subclassed.t
 t/test.psgi
 t/test_psgi.t
