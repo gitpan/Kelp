@@ -25,9 +25,11 @@ lib/Kelp/Request.pm
 lib/Kelp/Response.pm
 lib/Kelp/Routes.pm
 lib/Kelp/Routes/Pattern.pm
+lib/Kelp/Template.pm
 lib/Kelp/Test.pm
 log/keep
 t/base.t
+t/bin_tests.t
 t/conf/a/config.pl
 t/conf/b/config.pl
 t/conf/b/test.pl
@@ -68,6 +70,7 @@ t/run.t
 t/run_bridge.t
 t/run_panic.t
 t/subclassed.t
+t/template.t
 t/test.psgi
 t/test_psgi.t
 t/views/home.tt

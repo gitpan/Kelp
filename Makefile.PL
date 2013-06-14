@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use 5.010000;
+
 
 use ExtUtils::MakeMaker 6.30;
 
@@ -36,7 +36,7 @@ my %WriteMakefileArgs = (
     "Plack::Test" => 0,
     "Plack::Util" => 0,
     "Sys::Hostname" => 0,
-    "Template" => 0,
+    "Template::Tiny" => 0,
     "Test::Deep" => 0,
     "Test::More" => 0,
     "Try::Tiny" => 0,
@@ -45,11 +45,13 @@ my %WriteMakefileArgs = (
     "warnings" => 0
   },
   "TEST_REQUIRES" => {
+    "File::Temp" => 0,
     "HTTP::Request::Common" => 0,
     "Test::Exception" => 0,
+    "Test::Harness" => 0,
     "utf8" => 0
   },
-  "VERSION" => "0.3001",
+  "VERSION" => "0.3101",
   "test" => {
     "TESTS" => "t/*.t"
   }

@@ -3,8 +3,11 @@ abstract: 'A web framework light, yet rich in nutrients.'
 author:
   - 'Stefan Geneshky <minimal@cpan.org>'
 build_requires:
+  File::Temp: 0
   HTTP::Request::Common: 0
   Test::Exception: 0
+  Test::Harness: 0
+  perl: v5.10.0
   utf8: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.30
@@ -30,15 +33,14 @@ requires:
   Plack::Test: 0
   Plack::Util: 0
   Sys::Hostname: 0
-  Template: 0
+  Template::Tiny: 0
   Test::Deep: 0
   Test::More: 0
   Try::Tiny: 0
   feature: 0
-  perl: v5.10.0
   strict: 0
   warnings: 0
 resources:
   homepage: https://github.com/naturalist/kelp
   repository: https://github.com/naturalist/kelp.git
-version: 0.3001
+version: 0.3101

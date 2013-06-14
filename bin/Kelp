@@ -1,12 +1,9 @@
 #!/usr/bin/env perl
 
-use strict;
-use warnings;
-use v5.10;
-
+use Kelp::Base -strict;
 use Getopt::Long;
 use File::Path 'make_path';
-use Template;
+use Kelp::Template;
 use File::Basename;
 use File::Slurp 'write_file';
 
@@ -14,24 +11,25 @@ my $path = '.';
 my $verbose = 1;
 my $less = 0;
 my $help = 0;
-my $name = $ARGV[0] || do { $help = 1; '' };
 
 GetOptions(
-    "path=s"  => \$path,
-    "verbose" => \$verbose,
-    "less"    => \$less,
-    "help"    => \$help
+    "path=s"   => \$path,
+    "verbose!" => \$verbose,
+    "less"     => \$less,
+    "help"     => \$help
 );
+
+my $name = $ARGV[0] || do { $help = 1; '' };
 
 if ( $help ) {
     my $usage = q[
 Usage: Kelp [options] <name>
 
 Options:
-    --path=s    Path where to create the files
-    --less      Create a Kelp::Less application files
-    --verbose   Display information
-    --help      This help screen
+    --path=s        Path where to create the files
+    --less          Create a Kelp::Less application files
+    --(no)verbose   Display information
+    --help          This help screen
 ];
     say $usage;
     exit;
@@ -47,17 +45,15 @@ my $module_path = join( '/', @parts );
 
 # Template
 my $files = do {
-    my $template = Template->new();
-    my $output;
-    $template->process(
+    my $template = Kelp::Template->new();
+    my $output = $template->process(
         \*DATA, {
             module_file => $module_file,
             module_path => $module_path,
             path        => $path,
             name        => $name,
             less        => $less
-        },
-        \$output
+        }
     );
     my %result = ();
     my $key;
@@ -113,7 +109,7 @@ use [% name %];
 my $app = [% name %]->new();
 $app->run;
 [% END -%]
-[% IF !less -%]
+[% UNLESS less -%]
 :lib/[% module_path %]/[% module_file %].pm
 package [% name %];
 use Kelp::Base 'Kelp';
@@ -132,7 +128,7 @@ sub home {
 
 1;
 [% END -%]
-[% IF !less -%]
+[% UNLESS less -%]
 :conf/config.pl
 # Common settings
 {
@@ -169,7 +165,7 @@ sub home {
 
         # Enable UTF-8 in Template
         Template => {
-            ENCODING => 'utf8'
+            encoding => 'utf8'
         }
     }
 };
@@ -212,7 +208,7 @@ sub home {
 [% END -%]
 :views/home.tt
 Hello, world!
-[% IF !less -%]
+[% UNLESS less -%]
 :log/keep
 keeper
 [% END -%]
@@ -221,7 +217,7 @@ use Kelp::Base -strict;
 use Kelp::Test;
 use Test::More;
 use HTTP::Request::Common;
-[% IF !less -%]
+[% UNLESS less -%]
 use [% name %];
 [% END -%]
 
