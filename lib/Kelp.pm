@@ -12,7 +12,7 @@ use Plack::Util;
 use Kelp::Request;
 use Kelp::Response;
 
-our $VERSION = 0.3102;
+our $VERSION = 0.4001;
 
 # Basic attributes
 attr -host => hostname;
@@ -29,6 +29,7 @@ attr -charset => sub {
 };
 
 attr config_module => 'Config';
+attr -loaded_modules => sub { {} };
 
 # Each route's request an response objects will
 # be put here:
@@ -43,9 +44,12 @@ sub new {
     $self->load_module( $self->config_module );
     $self->load_module('Routes');
 
-    # Load the modules from the config
+    # Load the modules from the config, skip the disabled
     if ( defined( my $modules = $self->config('modules') ) ) {
-        $self->load_module($_) for @$modules;
+        my @disabled = @{ $self->config('modules_disable') // [] };
+        for my $m (@$modules) {
+            $self->load_module($m) unless grep { $m eq $_ } @disabled;
+        }
     }
 
     $self->build();
@@ -56,10 +60,10 @@ sub load_module {
     my ( $self, $name, %args ) = @_;
 
     # Make sure the module was not already loaded
-    return if $self->{_loaded_modules}->{$name}++;
+    return if $self->loaded_modules->{$name};
 
     my $class = Plack::Util::load_class( $name, 'Kelp::Module' );
-    my $module = $class->new( app => $self );
+    my $module = $self->loaded_modules->{$name} = $class->new( app => $self );
 
     # When loading the Config module itself, we don't have
     # access to $self->config yet. This is why we check if
@@ -70,7 +74,7 @@ sub load_module {
         $args_from_config = $self->config("modules_init.$name") // {};
     }
 
-    $module->build(%$args_from_config, %args);
+    $module->build( %$args_from_config, %args );
     return $module;
 }
 
@@ -108,6 +112,10 @@ sub run {
             # Make sure the middleware was not already loaded
             next if $self->{_loaded_middleware}->{$class}++;
 
+            # See if the middleware is not disabled
+            my @disabled = @{ $self->config('middleware_disabled') // [] };
+            next if grep { $class eq $_ } @disabled;
+
             my $mw = Plack::Util::load_class($class, 'Plack::Middleware');
             my $args = $self->config("middleware_init.$class") // {};
             $app = $mw->wrap( $app, %$args );
@@ -133,84 +141,74 @@ sub psgi {
         return $self->finalize;
     }
 
-    # Go over the entire route chain
-    for my $route (@$match) {
-        my $to = $route->to;
+    try {
 
-        # Check if the destination is valid
-        if ( ref($to) && ref($to) ne 'CODE' || !$to ) {
-            return $self->panic('Invalid destination for ' . $req->path);
-        }
+        # Go over the entire route chain
+        for my $route (@$match) {
+            my $to = $route->to;
 
-        # Check if the destination function exists
-        if ( !ref($to) && !exists &$to ) {
-            return $self->panic(sprintf('Route not found %s for %s', $to, $req->path));
-        }
-
-        # Log info about the route
-        if ( $self->can('logger') ) {
-            $self->logger(
-                'info',
-                sprintf( "%s - %s %s - %s",
-                    $req->address, $req->method, $req->path, $to )
-            );
-        }
-
-        # Eval the destination code
-        my $code = ref $to eq 'CODE' ? $to : \&{$to};
-        $req->named( $route->named );
-
-        my $data;
-        try {
-            $data = $code->($self, @{ $route->param });
-        }
-        catch {
-            return $self->panic($_);
-        };
-
-        # Is it a bridge? Bridges must return a true value
-        # to allow the rest of the routes to run.
-        if ( $route->bridge ) {
-            if ( !$data ) {
-                $res->render_401 unless $res->rendered;
-                last;
+            # Check if the destination is valid
+            if ( ref($to) && ref($to) ne 'CODE' || !$to ) {
+                die 'Invalid destination for ' . $req->path;
             }
-            next;
+
+            # Check if the destination function exists
+            if ( !ref($to) && !exists &$to ) {
+                die sprintf( 'Route not found %s for %s', $to, $req->path );
+            }
+
+            # Log info about the route
+            if ( $self->can('logger') ) {
+                $self->logger(
+                    'info',
+                    sprintf( "%s - %s %s - %s",
+                        $req->address, $req->method, $req->path, $to )
+                );
+            }
+
+            # Eval the destination code
+            my $code = ref $to eq 'CODE' ? $to : \&{$to};
+            $req->named( $route->named );
+            my $data = $code->( $self, @{ $route->param } );
+
+            # Is it a bridge? Bridges must return a true value
+            # to allow the rest of the routes to run.
+            if ( $route->bridge ) {
+                if ( !$data ) {
+                    $res->render_401 unless $res->rendered;
+                    last;
+                }
+                next;
+            }
+
+            # If the route returned something, then analyze it and render it
+            if ( defined $data ) {
+
+                # Handle delayed response if CODE
+                return $data if ref($data) eq 'CODE';
+                $res->render($data) unless $res->rendered;
+            }
         }
 
-        # If the route returned something, then analyze it and render it
-        if ( defined $data ) {
-
-            # Handle delayed response if CODE
-            return $data if ref($data) eq 'CODE';
-            $res->render($data) unless $res->rendered;
+        # If nothing got rendered, die with error
+        if ( !$self->res->rendered ) {
+            die $match->[-1]->to
+              . " did not render for method "
+              . $req->method;
         }
+
+        $self->finalize;
     }
+    catch {
+        my $message = $self->long_error ? longmess($_) : $_;
 
-    # If nothing got rendered, die with error
-    if ( !$self->res->rendered ) {
-        return $self->panic(
-            $match->[-1]->to . " did not render for method " . $req->method );
-    }
+        # Log error
+        $self->logger( 'critical', $message ) if $self->can('logger');
 
-    $self->finalize;
-}
-
-sub panic {
-    my $self = shift;
-    my $message = shift // 'Something went wrong!';
-
-    # Log error
-    $self->logger( 'critical', $message ) if $self->can('logger');
-
-    # Set code 500
-    $self->res->render_500;
-
-    # Render appropriate error message, depending on the mode
-    $message = longmess($message) if $self->long_error;
-    $self->res->render($message) if $self->mode ne 'deployment';
-
-    $self->finalize;
+        # Render 500
+        $self->res->render_500($message);
+        $self->finalize;
+    };
 }
 
 sub finalize {
@@ -224,6 +222,8 @@ sub finalize {
 # Request and Response shortcuts
 #----------------------------------------------------------------
 sub param { shift->req->param(@_) }
+
+sub session { shift->req->session(@_) }
 
 sub stash {
     my $self = shift;
@@ -1054,6 +1054,22 @@ default value is C<Config>, which will cause the C<Kelp::Module::Config> to get
 loaded. See the documentation for L<Kelp::Module::Config> for more information
 and for an example of how to create and use other config modules.
 
+=head2 loaded_modules
+
+A hashref containing the names and instances of all loaded modules. For example,
+if you have these two modules loaded: Template and JSON, then a dump of
+the C<loaded_modules> hash will look like this:
+
+    {
+        Template => Kelp::Module::Template=HASH(0x208f6e8),
+        JSON     => Kelp::Module::JSON=HASH(0x209d454)
+    }
+
+This can come handy if your module does more than just registering a new method
+into the application. Then, you can use its object instance to do access that
+additional functionality.
+
+
 =head2 path
 
 Gets the current path of the application. That would be the path to C<app.psgi>
@@ -1193,6 +1209,11 @@ A shortcut to C<$self-E<gt>req-E<gt>param>:
     }
 
 See L<Kelp::Request> for more information and examples.
+
+=head2 session
+
+A shortcut to C<$self-E<gt>req-E<gt>session>. Take a look at L<Kelp::Request/session>
+for more information and examples.
 
 =head2 stash
 

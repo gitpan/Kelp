@@ -18,9 +18,5 @@ isa_ok $m, 'Kelp::Module::Template';
 can_ok $app, $_ for qw/template/;
 is $app->template( \"[% a %] ☃", { a => 4 } ), '4 ☃', "Process";
 
-# Load a file
-like $app->template('home'), qr'Hello, world! ☃';
-like $app->template('home.tt'), qr'Hello, world! ☃';
-
 done_testing;
 

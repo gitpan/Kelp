@@ -2,7 +2,6 @@ package Kelp::Template;
 
 use Kelp::Base;
 use Template::Tiny;
-use File::Slurp;
 
 attr paths => sub { [] };
 attr encoding => 'utf8';
@@ -11,29 +10,41 @@ attr tt => sub { Template::Tiny->new };
 sub process {
     my ( $self, $template, $vars ) = @_;
 
-    # If $template is not a ref, then it's a filename.  In that case, we
-    # will look for it in all specified paths and change it to its full
-    # pathname.
-    if ( !ref $template ) {
-        for my $p ( '.', @{ $self->paths } ) {
-            if ( -e ( my $fullpath = "$p/$template" ) ) {
-                $template = $fullpath;
-                last;
+    my $ref = ref $template;
+
+    # A GLOB or an IO object will be read and returned as a SCALAR template
+    # No reference means a file name
+    if ( $ref =~ /^IO/ || $ref eq 'GLOB' || !$ref ) {
+        if ( !$ref ) {
+            for my $p ( '.', @{ $self->paths } ) {
+                if ( -e ( my $fullpath = "$p/$template" ) ) {
+                    $template = $fullpath;
+                    last;
+                }
             }
         }
+        $template = $self->_read_file($template);
     }
-
-    if ( ref($template) ne 'SCALAR' ) {
-        $template = read_file(
-            $template,
-            binmode    => ':' . $self->encoding,
-            scalar_ref => 1
-        );
+    elsif ( $ref ne 'SCALAR' ) {
+        die "Template reference must be SCALAR, GLOB or an IO object";
     }
 
     my $output;
     $self->tt->process( $template, $vars, \$output );
     return $output;
+}
+
+# File::Slurp does not work well in OSX, so we go old school here
+sub _read_file {
+    my ( $self, $file ) = @_;
+    my $fh = ref $file ? $file : do {
+        open my $h, "<:encoding(" . $self->encoding . ")", $file or die $!;
+        $h;
+    };
+    local $/;
+    my $text = <$fh>;
+    close $fh unless ref $file;
+    return \$text;
 }
 
 1;
