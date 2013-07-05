@@ -35,7 +35,6 @@ t/conf/b/config.pl
 t/conf/b/test.pl
 t/conf/c/test.pl
 t/conf/disable/config.pl
-t/conf/disable/test.pl
 t/conf/disable/test2.pl
 t/conf/e/config.pl
 t/conf/error/test.pl
@@ -56,7 +55,6 @@ t/module_config.t
 t/module_config_get.t
 t/module_config_merge.t
 t/module_config_null.t
-t/module_disable.t
 t/module_json.t
 t/module_load.t
 t/module_logger.t
