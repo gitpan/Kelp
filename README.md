@@ -218,6 +218,8 @@ and initialize a database connection:
 
 ```perl
 package MyApp;
+
+use parent Kelp;
 use Moose;
 
 has dbh => (
@@ -290,7 +292,7 @@ code.
 
 ```perl
 $r->add( "/home", "home" );  # goes to sub home
-$r->add( "/legal", "legal#view" ); # goes to MyApp::Legal::view
+$r->add( "/legal", "Legal::view" ); # goes to MyApp::Legal::view
 $r->add( "/about", sub { "Content for about" }); # inline
 ```
 
@@ -334,7 +336,7 @@ This will handle `/person`, `/person/` and `/person/jack`.
 #### Wildcards
 
 ```perl
-$r->add( '/*article/:id', 'articles#view' );
+$r->add( '/*article/:id', 'Articles::view' );
 ```
 
 This will handle `/bar/foo/baz/500` and send it to `MyApp::Articles::view`
@@ -347,7 +349,7 @@ Paths' named placeholders can be restricted by providing regular expressions.
 ```perl
 $r->add( '/user/:id', {
     check => { id => '\d+' },
-    to    => "users#get"
+    to    => "Users::get"
 });
 
 # Matches /user/1000, but not /user/abc
@@ -387,7 +389,7 @@ Each path can be given a name and later a URL can be built using that name and
 the necessary arguments.
 
 ```perl
-$r->add( "/update/:id", { name => 'update', to => 'user#update' } );
+$r->add( "/update/:id", { name => 'update', to => 'User::update' } );
 
 # Later
 

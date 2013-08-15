@@ -12,7 +12,7 @@ use Plack::Util;
 use Kelp::Request;
 use Kelp::Response;
 
-our $VERSION = 0.4012;
+our $VERSION = 0.4501;
 
 # Basic attributes
 attr -host => hostname;
@@ -502,6 +502,8 @@ app will use. Here is an example that uses C<Moose> to create lazy attributes
 and initialize a database connection:
 
     package MyApp;
+
+    use parent Kelp;
     use Moose;
 
     has dbh => (
@@ -588,7 +590,7 @@ You can direct HTTP paths to subroutines in your classes or, you can use inline
 code.
 
     $r->add( "/home", "home" );  # goes to sub home
-    $r->add( "/legal", "legal#view" ); # goes to MyApp::Legal::view
+    $r->add( "/legal", "Legal::view" ); # goes to MyApp::Legal::view
     $r->add( "/about", sub { "Content for about" }); # inline
 
 =head3 Restrict HTTP methods
@@ -624,7 +626,7 @@ This will handle C</person>, C</person/> and C</person/jack>.
 
 =head4 Wildcards
 
-    $r->add( '/*article/:id', 'articles#view' );
+    $r->add( '/*article/:id', 'Articles::view' );
 
 This will handle C</bar/foo/baz/500> and send it to C<MyApp::Articles::view>
 with parameters C<$article> equal to C<bar/foo/baz> and C<$id> equal to 500.
@@ -635,7 +637,7 @@ Paths' named placeholders can be restricted by providing regular expressions.
 
     $r->add( '/user/:id', {
         check => { id => '\d+' },
-        to    => "users#get"
+        to    => "Users::get"
     });
 
     # Matches /user/1000, but not /user/abc
@@ -669,7 +671,7 @@ See L<Kelp::Routes/BRIDGES> for more information.
 Each path can be given a name and later a URL can be built using that name and
 the necessary arguments.
 
-    $r->add( "/update/:id", { name => 'update', to => 'user#update' } );
+    $r->add( "/update/:id", { name => 'update', to => 'User::update' } );
 
     # Later
 
