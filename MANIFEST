@@ -39,6 +39,7 @@ t/conf/disable/test2.pl
 t/conf/e/config.pl
 t/conf/error/test.pl
 t/conf/f/config.pl
+t/conf/mw/config.pl
 t/conf/null/config.null
 t/conf/session/config.pl
 t/conf/template/config.pl
