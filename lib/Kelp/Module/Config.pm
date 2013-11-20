@@ -187,7 +187,10 @@ sub _merge {
     }
     elsif ( ref $a eq 'HASH' ) {
         for my $k ( keys %$b ) {
-            my $s = $k =~ s/^(\+|\-)// ? $1 : '';
+
+            # If the key is an array then look for a merge sigil
+            my $s = ref($b->{$k}) eq 'ARRAY' && $k =~ s/^(\+|\-)// ? $1 : '';
+
             $a->{$k} =
               exists $a->{$k}
               ? _merge( $a->{$k}, $b->{"$s$k"}, $s )
@@ -241,7 +244,7 @@ take priority. Merging is done as follows:
 
 =over
 
-=item Scalars will always be overwriten.
+=item Scalars will always be overwritten.
 
 =item Hashes will be merged.
 
@@ -299,6 +302,24 @@ No sigil will cause the array to be completely replaced:
 =cut
 
 =back
+
+Note that the merge sigils only apply to arrays. All other types will keep the
+sigil in the key name:
+
+    # config.pl
+    {
+        modules      => ["+MyApp::Fully::Qualified::Name"],
+        modules_init => {
+            "+MyApp::Fully::Qualified::Name" => { opt1 => 1, opt2 => 2 }
+        }
+    }
+
+    # development.pl
+    {
+        modules_init => {
+            "+MyApp::Fully::Qualified::Name" => { opt3 => 3 }
+        }
+    }
 
 =back
 
@@ -387,7 +408,7 @@ C<http://localhost:5000>
 
 =head2 modules
 
-An arrayrf with module names to load on startup. The default value is
+An arrayref with module names to load on startup. The default value is
 C<['JSON', 'Template']>
 
 =head2 modules_init

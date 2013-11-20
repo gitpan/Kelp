@@ -45,6 +45,7 @@ t/conf/session/config.pl
 t/conf/template/config.pl
 t/less.t
 t/lib/MyApp.pm
+t/lib/MyApp/Module/Null.pm
 t/lib/MyApp/Response.pm
 t/lib/MyApp/Routes.pm
 t/lib/MyApp/Routes2.pm

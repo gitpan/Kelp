@@ -12,7 +12,7 @@ use Plack::Util;
 use Kelp::Request;
 use Kelp::Response;
 
-our $VERSION = 0.4550;
+our $VERSION = 0.4560;
 
 # Basic attributes
 attr -host => hostname;
@@ -56,10 +56,14 @@ sub new {
 sub load_module {
     my ( $self, $name, %args ) = @_;
 
+    # A module name with a leading + indicates it's already fully
+    # qualified (i.e., it does not need the Kelp::Module:: prefix).
+    my $prefix = $name =~ s/^\+// ? undef : 'Kelp::Module';
+
     # Make sure the module was not already loaded
     return if $self->loaded_modules->{$name};
 
-    my $class = Plack::Util::load_class( $name, 'Kelp::Module' );
+    my $class = Plack::Util::load_class( $name, $prefix );
     my $module = $self->loaded_modules->{$name} = $class->new( app => $self );
 
     # When loading the Config module itself, we don't have
@@ -927,7 +931,7 @@ begin with C</public>:
 =head3 Uploading files
 
 File uploads are handled by L<Kelp::Request>, which inherits Plack::Request
-and has its C<uploads|Plack::Request/uploads> property. The uploads propery returns a
+and has its C<uploads|Plack::Request/uploads> property. The uploads property returns a
 reference to a hash containing all uploads.
 
     sub upload {
@@ -1250,15 +1254,19 @@ arguments.
 
 =item * Mailing list: https://groups.google.com/forum/?fromgroups#!forum/perl-kelp
 
+=item * IRC: #kelp at irc.perl.org
+
 =back
 
 =head1 AUTHOR
 
-Stefan Geneshky - minimal@cpan.org
+Stefan Geneshky - minimal <at> cpan.org
 
 =head1 CONTRIBUTORS
 
-Gurunandan Bhat - gbhat@pobox.com
+Maurice Aubrey
+David Steinbrunner
+Gurunandan Bhat
 
 =head1 LICENSE
 
