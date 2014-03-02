@@ -850,13 +850,17 @@ SUPPORT
     *   Mailing list:
         https://groups.google.com/forum/?fromgroups#!forum/perl-kelp
 
-    *   IRC: #kelp at irc.perl.org
-
 AUTHOR
     Stefan Geneshky - minimal <at> cpan.org
 
 CONTRIBUTORS
-    Maurice Aubrey David Steinbrunner Gurunandan Bhat
+    Julio Fraire
+
+    Maurice Aubrey
+
+    David Steinbrunner
+
+    Gurunandan Bhat
 
 LICENSE
     This module and all the modules in this package are governed by the same
