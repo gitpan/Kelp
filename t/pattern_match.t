@@ -203,6 +203,28 @@ _match(
 );
 
 _match(
+    '/:a',
+    check => { a => '\d{1,3}' },
+    yes   => [qw{/1 /12 /123}],
+    no    => [qw{/a /ab /abc /1234 /a12}]
+);
+
+# Checks and partials
+_match(
+    '/:a/{?b}ing',
+    check => { a => qr/\w{3}/, b => qr/\d{1,3}/ },
+    yes   => {
+        '/bar/ing'    => { a => 'bar' },
+        '/bar/123ing' => { a => 'bar', b => '123' }
+    },
+    par => {
+        '/bar/ing'    => [ 'bar', undef ],
+        '/bar/123ing' => [ 'bar', '123' ]
+    },
+    no => [ '/a/b', '/a', '/a/min', '/a/1234ing' ]
+);
+
+_match(
     '/:a/*c',
     check => { a => qr/[^0-9]+/, c => qr/\d{1,2}/ },
     yes => {
@@ -220,18 +242,34 @@ _match(
 
 # Regexp instead of pattern
 _match(
-    qr{/(\w+)/(\w+)$},
+    qr{/([a-z]+)/([a-z]+)$},
+    no  => [qw{/12/12 /123/abc /abc/123}],
+    yes => [qw{/abc/a /a/b /a/abc}],
     par => {
-        '/abc/def' => [qw/abc def/]
+        '/abc/a' => [qw{abc a}],
+        '/a/b'   => [qw{a b}],
+        '/a/abc' => [qw{a abc}],
     }
 );
 
 _match(
-    qr{/(\w+)/?(\w*)$},
+    qr{/([a-z]+)/?([a-z]*)$},
+    no  => [qw{/123 /abc/123}],
+    yes => [qw{/abc/def /abc}],
     par => {
         '/abc/def' => [qw/abc def/],
-        '/abc'     => ['abc'],
-        '/abc/###' => ['abc']
+        '/abc'     => [ 'abc', undef ],
+    }
+);
+
+_match(
+    qr{/(\d{1,3})$},
+    no  => [ '/abc', '/ab2', '/1234', '/123a' ],
+    yes => [qw{/1 /12 /123}],
+    par => {
+        '/1'   => ['1'],
+        '/12'  => ['12'],
+        '/123' => ['123']
     }
 );
 

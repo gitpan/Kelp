@@ -2,7 +2,7 @@ package Kelp;
 
 use Kelp::Base;
 
-use Carp 'longmess';
+use Carp qw/ longmess croak /;
 use FindBin;
 use Encode;
 use Try::Tiny;
@@ -12,7 +12,7 @@ use Plack::Util;
 use Kelp::Request;
 use Kelp::Response;
 
-our $VERSION = 0.4602;
+our $VERSION = 0.9001;
 
 # Basic attributes
 attr -host => hostname;
@@ -28,7 +28,13 @@ attr -charset => sub {
     $_[0]->config("charset") // 'UTF-8';
 };
 
+# Name the config module
 attr config_module => 'Config';
+
+# Undocumented.
+# Used to unlock the undocumented features of the Config module.
+attr __config => undef;
+
 attr -loaded_modules => sub { {} };
 
 # Each route's request an response objects will
@@ -41,7 +47,7 @@ sub new {
     my $self = shift->SUPER::new(@_);
 
     # Always load these modules
-    $self->load_module( $self->config_module );
+    $self->load_module( $self->config_module, extra => $self->__config );
     $self->load_module('Routes');
 
     # Load the modules from the config
@@ -51,6 +57,16 @@ sub new {
 
     $self->build();
     return $self;
+}
+
+# Create a shallow copy of the app, optionally blessed into a
+# different subclass.
+sub _clone {
+    my $self = shift;
+    my $subclass = shift || ref($self);
+
+    ref $self or croak '_clone requires instance';
+    return bless { %$self }, $subclass;
 }
 
 sub load_module {
@@ -142,31 +158,19 @@ sub psgi {
 
         # Go over the entire route chain
         for my $route (@$match) {
-            my $to = $route->to;
 
-            # Check if the destination is valid
-            if ( ref($to) && ref($to) ne 'CODE' || !$to ) {
-                die 'Invalid destination for ' . $req->path;
-            }
-
-            # Check if the destination function exists
-            if ( !ref($to) && !exists &$to ) {
-                die sprintf( 'Route not found %s for %s', $to, $req->path );
-            }
+            # Dispatch
+            $self->req->named( $route->named );
+            my $data = $self->routes->dispatch( $self, $route );
 
             # Log info about the route
             if ( $self->can('logger') ) {
                 $self->logger(
                     'info',
                     sprintf( "%s - %s %s - %s",
-                        $req->address, $req->method, $req->path, $to )
+                        $req->address, $req->method, $req->path, $route->to )
                 );
             }
-
-            # Eval the destination code
-            my $code = ref $to eq 'CODE' ? $to : \&{$to};
-            $req->named( $route->named );
-            my $data = $code->( $self, @{ $route->param } );
 
             # Is it a bridge? Bridges must return a true value
             # to allow the rest of the routes to run.
@@ -352,16 +356,15 @@ module of your choice to return rich text, html and JSON responses.
 
 =item
 
-B<JSON encoder/decoder>. If you're serious about your back-end code. Kelp comes
-with JSON, but you can easily plug in JSON::XS or any decoder of your choice.
+B<JSON encoder/decoder>. Kelp comes with JSON, but you can easily plug in JSON::XS
+or any decoder of your choice.
 
 =cut
 
 =item
 
 B<Extendable Core>. Kelp uses pluggable modules for everything. This allows
-anyone to add a module for a custom interface. Writing Kelp modules is a
-pleasant and fulfilling activity.
+anyone to add a module for a custom interface. Writing Kelp modules is easy.
 
 =cut
 
@@ -680,6 +683,56 @@ the necessary arguments.
     # Later
 
     my $url = $self->route->url('update', id => 1000); # /update/1000
+
+=head2 Reblessing the app into a controller class
+
+All of the examples here show routes which take an instance of the web
+application as a first parameter. This is true even if those routes live in
+another class. To rebless the app instance into the controller class instance,
+use the custom router class L<Kelp::Router::Controller>.
+
+=head3 Step 1: Specify the custom router class in the config
+
+    # config.pl
+    {
+        modules_init => {
+            Routes => {
+                router => 'Controller'
+            }
+        }
+    }
+
+=head3 Step 2: Create a main controller class
+
+This class must inherit from Kelp.
+
+    # lib/MyApp/Controller.pm
+    package MyApp::Controller;
+    use Kelp::Base 'MyApp';
+
+    # Now $self is an instance of 'MyApp::Controller';
+    sub service_method {
+        my $self = shift;
+        ...;
+    }
+
+    1;
+
+=head3 Step 3: Create any number of controller classes
+
+They all must inherit from your main controller class.
+
+    # lib/MyApp/Controller/Users.pm
+    package MyApp::Controller::Users;
+    use Kelp::Base 'MyApp::Controller';
+
+    # Now $self is an instance of 'MyApp::Controller::Users'
+    sub authenticate {
+        my $self = shift;
+        ...;
+    }
+
+    1;
 
 =head2 Quick development using Kelp::Less
 

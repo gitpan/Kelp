@@ -31,6 +31,7 @@ requires:
   File::Slurp: '0'
   FindBin: '0'
   Getopt::Long: '0'
+  HTTP::Cookies: '0'
   JSON: '0'
   Log::Dispatch: '0'
   Plack::Test: '0'
@@ -46,4 +47,4 @@ requires:
 resources:
   homepage: https://github.com/naturalist/kelp
   repository: https://github.com/naturalist/kelp.git
-version: '0.4602'
+version: '0.9001'

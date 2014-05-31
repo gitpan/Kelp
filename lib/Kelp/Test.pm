@@ -7,6 +7,7 @@ use Test::More import => ['!note'];
 use Test::Deep;
 use Carp;
 use Encode ();
+use HTTP::Cookies;
 
 BEGIN {
     $ENV{KELP_TESTING} = 1;    # Set the ENV for testing
@@ -23,16 +24,40 @@ attr -app => sub {
 
 attr res  => sub { die "res is not initialized" };
 
-attr -run => sub {
-    $_[0]->app->run;
-};
+attr cookies => sub { HTTP::Cookies->new };
 
 sub request {
     my ( $self, $req ) = @_;
     croak "HTTP::Request object needed" unless ref($req) eq 'HTTP::Request';
     $self->note( $req->method . ' ' . $req->uri );
-    $self->res( test_psgi( $self->run, sub { shift->($req) } ) );
+
+    # Most likely the request was not initialized with a URI that had a scheme,
+    # so we add a default http to prevent unitialized regex matches further
+    # down the chain
+    $req->uri->scheme('http') unless $req->uri->scheme;
+
+    # If no host was given to the request's uri (most likely), then add
+    # localhost. This is needed by the cookies header, which will not be
+    # applied unless the request uri has a proper domain.
+    if ( $req->uri->opaque =~ qr|^/{1}| ) {
+        $req->uri->opaque( '//localhost' . $req->uri->opaque );
+    }
+
+    # Add the current cookie to the request headers
+    $self->cookies->add_cookie_header($req);
+
+    my $res = test_psgi( $self->app->run, sub { shift->($req) } );
+
+    # Extract the cookies from the response and add them to the cookie jar
+    $self->cookies->extract_cookies($res);
+
+    $self->res($res);
     return $self;
+}
+
+sub request_ok {
+    my ( $self, $req, $test_name ) = @_;
+    $self->request($req)->code_is( 200, $test_name );
 }
 
 sub code_is {
@@ -218,7 +243,7 @@ From this point on, all requests run with C<$t-E<gt>request> will be sent to C<$
 
 =head2 res
 
-Each time C<$t->request> is used to send a request, an HTTP::Response object is
+Each time C<$t-E<gt>request> is used to send a request, an HTTP::Response object is
 returned and saved in the C<res> attribute. You can use it to run tests,
 although as you will see, this module provides methods which make this a lot
 easier. It is recommended that you use the convenience methods rather than using
@@ -226,6 +251,10 @@ C<res>.
 
     $t->request( GET '/path' )
     is $t->res->code, 200, "It's a success";
+
+=head2 cookies
+
+An L<HTTP::Cookies> object containing the cookie jar for all tests.
 
 =head1 METHODS
 
@@ -243,6 +272,16 @@ you can take advantage of the simplified syntax for creating an HTTP request.
 
 This method returns C<$self>, so other methods can be chained after it.
 
+=head2 request_ok
+
+C<request_ok( $http_request, $test_name )>
+
+Runs C<request>, then tests if the response code is 200. Equivalent to the following
+code:
+
+    $t->request( GET '/path' )->code_is(200);
+    $t->request_ok( GET '/path' );    # Same as the above
+
 =head2 code_is, code_isnt
 
 C<code_is( $code, $test_name )>, C<code_isnt( $code, $test_name )>
@@ -252,6 +291,13 @@ An optional name of the test can be added as a second parameter.
 
     $t->request( GET '/path' )->code_is(200);
     $t->request( GET '/path' )->code_isnt(500);
+
+=head2 request_ok
+
+Same as L</request>, but also runs C<code_is(200)>.
+
+    $t->request_ok( GET '/home' );
+    # Tests for code = 200
 
 =head2 content_is, content_isnt
 

@@ -75,13 +75,12 @@ DESCRIPTION
         template module of your choice to return rich text, html and JSON
         responses.
 
-    *   JSON encoder/decoder. If you're serious about your back-end code.
-        Kelp comes with JSON, but you can easily plug in JSON::XS or any
-        decoder of your choice.
+    *   JSON encoder/decoder. Kelp comes with JSON, but you can easily plug
+        in JSON::XS or any decoder of your choice.
 
     *   Extendable Core. Kelp uses pluggable modules for everything. This
         allows anyone to add a module for a custom interface. Writing Kelp
-        modules is a pleasant and fulfilling activity.
+        modules is easy.
 
     *   Sleek Testing. Kelp takes Plack::Test and wraps it in an object
         oriented class of convenience methods. Testing is done via sending
@@ -345,6 +344,52 @@ CREATING A NEW WEB APP
         # Later
 
         my $url = $self->route->url('update', id => 1000); # /update/1000
+
+  Reblessing the app into a controller class
+    All of the examples here show routes which take an instance of the web
+    application as a first parameter. This is true even if those routes live
+    in another class. To rebless the app instance into the controller class
+    instance, use the custom router class Kelp::Router::Controller.
+
+   Step 1: Specify the custom router class in the config
+        # config.pl
+        {
+            modules_init => {
+                Routes => {
+                    router => 'Controller'
+                }
+            }
+        }
+
+   Step 2: Create a main controller class
+    This class must inherit from Kelp.
+
+        # lib/MyApp/Controller.pm
+        package MyApp::Controller;
+        use Kelp::Base 'MyApp';
+
+        # Now $self is an instance of 'MyApp::Controller';
+        sub service_method {
+            my $self = shift;
+            ...;
+        }
+
+        1;
+
+   Step 3: Create any number of controller classes
+    They all must inherit from your main controller class.
+
+        # lib/MyApp/Controller/Users.pm
+        package MyApp::Controller::Users;
+        use Kelp::Base 'MyApp::Controller';
+
+        # Now $self is an instance of 'MyApp::Controller::Users'
+        sub authenticate {
+            my $self = shift;
+            ...;
+        }
+
+        1;
 
   Quick development using Kelp::Less
     For writing quick experimental web apps and to reduce the boiler plate,

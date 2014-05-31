@@ -32,6 +32,7 @@ my %WriteMakefileArgs = (
     "File::Slurp" => 0,
     "FindBin" => 0,
     "Getopt::Long" => 0,
+    "HTTP::Cookies" => 0,
     "JSON" => 0,
     "Log::Dispatch" => 0,
     "Plack::Test" => 0,
@@ -55,7 +56,7 @@ my %WriteMakefileArgs = (
     "lib" => 0,
     "utf8" => 0
   },
-  "VERSION" => "0.4602",
+  "VERSION" => "0.9001",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -73,6 +74,7 @@ my %FallbackPrereqs = (
   "File::Temp" => 0,
   "FindBin" => 0,
   "Getopt::Long" => 0,
+  "HTTP::Cookies" => 0,
   "HTTP::Request::Common" => 0,
   "IO::File" => 0,
   "JSON" => 0,

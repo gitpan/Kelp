@@ -79,11 +79,10 @@ into your current one for testing and debugging purposes.
 file, screen, or anything supported by Log::Dispatcher.
 - __Powerful Rendering__. Use the built-in auto-rendering logic, or the template
 module of your choice to return rich text, html and JSON responses.
-- __JSON encoder/decoder__. If you're serious about your back-end code. Kelp comes
-with JSON, but you can easily plug in JSON::XS or any decoder of your choice.
+- __JSON encoder/decoder__. Kelp comes with JSON, but you can easily plug in JSON::XS
+or any decoder of your choice.
 - __Extendable Core__. Kelp uses pluggable modules for everything. This allows
-anyone to add a module for a custom interface. Writing Kelp modules is a
-pleasant and fulfilling activity.
+anyone to add a module for a custom interface. Writing Kelp modules is easy.
 - __Sleek Testing__. Kelp takes Plack::Test and wraps it in an object oriented
 class of convenience methods. Testing is done via sending requests to your
 routes, then analyzing the response.
@@ -394,6 +393,62 @@ $r->add( "/update/:id", { name => 'update', to => 'User::update' } );
 # Later
 
 my $url = $self->route->url('update', id => 1000); # /update/1000
+```
+
+## Reblessing the app into a controller class
+
+All of the examples here show routes which take an instance of the web
+application as a first parameter. This is true even if those routes live in
+another class. To rebless the app instance into the controller class instance,
+use the custom router class [Kelp::Router::Controller](http://search.cpan.org/perldoc?Kelp::Router::Controller).
+
+### Step 1: Specify the custom router class in the config
+
+```perl
+# config.pl
+{
+    modules_init => {
+        Routes => {
+            router => 'Controller'
+        }
+    }
+}
+```
+
+### Step 2: Create a main controller class
+
+This class must inherit from Kelp.
+
+```perl
+# lib/MyApp/Controller.pm
+package MyApp::Controller;
+use Kelp::Base 'MyApp';
+
+# Now $self is an instance of 'MyApp::Controller';
+sub service_method {
+    my $self = shift;
+    ...;
+}
+
+1;
+```
+
+### Step 3: Create any number of controller classes
+
+They all must inherit from your main controller class.
+
+```perl
+# lib/MyApp/Controller/Users.pm
+package MyApp::Controller::Users;
+use Kelp::Base 'MyApp::Controller';
+
+# Now $self is an instance of 'MyApp::Controller::Users'
+sub authenticate {
+    my $self = shift;
+    ...;
+}
+
+1;
 ```
 
 ## Quick development using Kelp::Less
@@ -1001,6 +1056,8 @@ sub check {
 Stefan Geneshky - minimal <at> cpan.org
 
 # CONTRIBUTORS
+
+Ruslan Zakirov
 
 Julio Fraire
 

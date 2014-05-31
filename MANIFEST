@@ -7,7 +7,6 @@ Makefile.PL
 README
 README.md
 bin/Kelp
-conf/nomod.pl
 conf/test.pl
 dist.ini
 lib/Kelp.pm
@@ -25,6 +24,7 @@ lib/Kelp/Module/Template/Null.pm
 lib/Kelp/Request.pm
 lib/Kelp/Response.pm
 lib/Kelp/Routes.pm
+lib/Kelp/Routes/Controller.pm
 lib/Kelp/Routes/Pattern.pm
 lib/Kelp/Template.pm
 lib/Kelp/Test.pm
@@ -40,16 +40,16 @@ t/conf/disable/test2.pl
 t/conf/e/config.pl
 t/conf/error/test.pl
 t/conf/f/config.pl
-t/conf/mw/config.pl
 t/conf/null/config.null
-t/conf/session/config.pl
-t/conf/template/config.pl
 t/less.t
 t/lib/MyApp.pm
 t/lib/MyApp/Module/Null.pm
 t/lib/MyApp/Response.pm
 t/lib/MyApp/Routes.pm
 t/lib/MyApp/Routes2.pm
+t/lib/MyApp2.pm
+t/lib/MyApp2/Controller.pm
+t/lib/MyApp2/Controller/Bar.pm
 t/loaded_modules.t
 t/log/keep
 t/middleware.t
@@ -75,6 +75,7 @@ t/response_finalize.t
 t/response_redirect.t
 t/routes_add.t
 t/routes_camelize.t
+t/routes_controller.t
 t/routes_match.t
 t/routes_url.t
 t/run.t
@@ -83,6 +84,7 @@ t/subclassed.t
 t/template.t
 t/test.psgi
 t/test_psgi.t
+t/test_request.t
 t/views/error/404.tt
 t/views/error/500.tt
 t/views/error/700.tt

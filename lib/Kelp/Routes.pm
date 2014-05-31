@@ -7,9 +7,9 @@ use Kelp::Routes::Pattern;
 use Plack::Util;
 use Class::Inspector;
 
-attr base   => '';
-attr routes => sub { [] };
-attr names  => sub { {} };
+attr base    => '';
+attr routes  => sub { [] };
+attr names   => sub { {} };
 
 # Cache
 attr _CACHE => sub { {} };
@@ -162,6 +162,36 @@ sub match {
     my $value = \@processed;
     $self->cache->set( $key, $value );
     return $value;
+}
+
+sub dispatch {
+    my ( $self, $app, $route ) = @_;
+    $app   || die "Application instance required";
+    $route || die "No route pattern instance supplied";
+
+    # Shortcuts
+    my $req = $app->req;
+    my $to  = $route->to;
+
+    # Destination must be either a scalar, or a code reference
+    if ( !$to || ref $to && ref $to ne 'CODE' ) {
+        die 'Invalid destination for ' . $req->path;
+    }
+
+    # If the destination is not a code reference, then we assume it's
+    # a fully qualified function name, so we find its reference
+    unless ( ref $to ) {
+
+        # Check if the destination function exists
+        unless ( exists &$to ) {
+            die sprintf( 'Route not found %s for %s', $to, $req->path );
+        }
+
+        # Move to reference
+        $to = \&{$to};
+    }
+
+    return $to->( $app, @{ $route->param } );
 }
 
 1;
@@ -644,6 +674,15 @@ L<Kelp::Routes::Pattern/param>.
 Routes that used regular expressions instead of patterns will only initialize
 the C<param> array with the regex captures, unless those patterns are using
 named captures in which case the C<named> hash will also be initialized.
+
+=head1 EXTENDING
+
+This is the default router class for each new Kelp application, but it doesn't
+have to be. You can create your own subclass that better suits your needs. It's
+generally enough to override the L</dispatch> method.
+
+Kelp comes with L<Kelp::Routes::Controller>, a router extension which reblesses
+the application instance into a controller class.
 
 =head1 ACKNOWLEDGEMENTS
 
