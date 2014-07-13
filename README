@@ -802,7 +802,7 @@ METHODS
     options. See Kelp::Module for more information on making and using
     modules.
 
-  request
+  build_request
     This method is used to create the request object for each HTTP request.
     It returns an instance of Kelp::Request, initialized with the current
     request's environment. You can override this method to use a custom
@@ -811,9 +811,9 @@ METHODS
         package MyApp;
         use MyApp::Request;
 
-        sub request {
+        sub build_request {
             my ( $self, $env ) = @_;
-            return MyApp::Requst->new( app => $app, env => $env );
+            return MyApp::Request->new( app => $app, env => $env );
         }
 
         # Now each request will be handled by MyApp::Request
@@ -834,11 +834,11 @@ METHODS
     The above is an example of how to insert a custom header into the
     response of every route.
 
-  response
+  build_response
     This method creates the response object, e.g. what an HTTP request will
     return. By default the object created is Kelp::Response. Much like
-    "request", the response can also be overridden to use a custom response
-    object.
+    "build_request", the response can also be overridden to use a custom
+    response object.
 
   run
     This method builds and returns the PSGI app. You can override it in
