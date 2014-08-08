@@ -3,6 +3,9 @@ use Kelp::Less mode => 'test';
 use HTTP::Request::Common qw/GET PUT POST DELETE/;
 use Test::More;
 
+module 'JSON', utf8 => 1;
+module 'Template';
+
 my $t = Kelp::Test->new( app => app );
 
 # route
@@ -68,5 +71,9 @@ $t->request( GET '/attr' )->content_is("J");
 route '/sub' => 'func';
 sub func { "K" }
 $t->request( GET '/sub' )->content_is("K");
+
+# config
+route '/config' => sub { config('charset') };
+$t->request( GET '/config')->content_is('UTF-8');
 
 done_testing;

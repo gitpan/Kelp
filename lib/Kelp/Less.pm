@@ -6,20 +6,24 @@ use Kelp::Base -strict;
 our @EXPORT = qw/
   app
   attr
-  route
+  config
+  del
+  debug
+  error
   get
+  module
+  named
+  param
   post
   put
-  del
-  run
-  param
-  stash
-  named
   req
   res
-  template
-  module
+  route
+  run
   session
+  stash
+  template
+  view
   /;
 
 our $app;
@@ -36,7 +40,7 @@ sub import {
     warnings->import;
     feature->import(':5.10');
 
-    $app = Kelp->new(@_);
+    $app = Kelp->new(config_module => 'Config::Less', @_);
     $app->routes->base('main');
 }
 
@@ -81,9 +85,11 @@ sub named    { $app->named(@_) }
 sub req      { $app->req }
 sub res      { $app->res }
 sub template { $app->res->template(@_) }
-sub debug    { $app->debug(@_) }
-sub error    { $app->error(@_) }
+sub view     { $app->res->template(@_) }
+sub debug    { $app->debug(@_) if $app->can('debug') }
+sub error    { $app->error(@_) if $app->can('error') }
 sub module   { $app->load_module(@_) }
+sub config   { $app->config(@_) }
 
 1;
 
@@ -309,10 +315,23 @@ object for the current route.
 =head2 template
 
 A shortcut to C<$self-E<gt>res-E<gt>template>. Renders a template using the
-currently loaded template module.
+currently loaded template module. Note that a Kelp::Less application does not
+by default load a template module, so you will have to load it yourself.
+
+    use Kelp::Less;
+
+    module 'Template', path => 'views';
 
     get '/hello/:name' => sub {
         template 'hello.tt', { name => named 'name' };
+    };
+
+=head2 view
+
+A shortcut for L</template>.
+
+    get '/hello/:name' => sub {
+        view 'hello.tt', { name => named 'name' };
     };
 
 =head2 run
@@ -324,6 +343,14 @@ Creates and returns a PSGI ready subroutine, and makes the app ready for C<Plack
 Loads a Kelp module. The module options may be specified after the module name.
 
     module 'JSON::XS', pretty => 1;
+
+=head2 config
+
+Provides procedural interface to the configuration.
+
+    get '/hello' => sub {
+        my $baz = config('bar.foo.baz');
+    };
 
 =head1 TESTING
 

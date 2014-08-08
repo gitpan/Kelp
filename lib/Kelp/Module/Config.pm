@@ -144,7 +144,7 @@ sub build {
             $parsed = $self->load($name);
         }
         catch {
-            croak "Parsing $name died with error: '${_}'";
+            die "Parsing $name died with error: '${_}'";
         };
         $data_ref = _merge( $data_ref, $parsed );
     };
@@ -278,6 +278,15 @@ default values.  The same order applies to the I<mode> file too, so if the
 application L<mode|Kelp/mode> is I<development>, then C<conf/development.pl>
 and C<../conf/development.pl> will be looked for. If found, they will also be
 merged to the config hash.
+
+=head1 ACCESSING THE APPLICATION
+
+The application instance can be accessed within the config files via the C<app>
+keyword.
+
+    {
+        bin_path => app->path . '/bin'
+    }
 
 =head1 MERGING
 

@@ -12,7 +12,7 @@ use Plack::Util;
 use Kelp::Request;
 use Kelp::Response;
 
-our $VERSION = 0.9012;
+our $VERSION = 0.9015;
 
 # Basic attributes
 attr -host => hostname;
@@ -689,7 +689,7 @@ the necessary arguments.
 All of the examples here show routes which take an instance of the web
 application as a first parameter. This is true even if those routes live in
 another class. To rebless the app instance into the controller class instance,
-use the custom router class L<Kelp::Router::Controller>.
+use the custom router class L<Kelp::Routes::Controller>.
 
 =head3 Step 1: Specify the custom router class in the config
 

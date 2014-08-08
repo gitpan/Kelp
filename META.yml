@@ -47,4 +47,4 @@ requires:
 resources:
   homepage: https://github.com/naturalist/kelp
   repository: https://github.com/naturalist/kelp.git
-version: '0.9012'
+version: '0.9015'

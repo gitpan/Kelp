@@ -9,12 +9,14 @@ use File::Slurp 'write_file';
 
 my $path = '.';
 my $verbose = 1;
+my $force = 0;
 my $less = 0;
 my $help = 0;
 
 GetOptions(
     "path=s"   => \$path,
     "verbose!" => \$verbose,
+    "force!"   => \$force,
     "less"     => \$less,
     "help"     => \$help
 );
@@ -29,6 +31,7 @@ Options:
     --path=s        Path where to create the files
     --less          Create a Kelp::Less application files
     --(no)verbose   Display information
+    --force         Force overwriting existing files
     --help          This help screen
 ];
     say $usage;
@@ -81,6 +84,12 @@ while ( my ( $filename, $lines ) = each %$files ) {
         _say("Creating folder: $dir");
         make_path($dir);
     }
+
+    if ( -e $filename && !$force) {
+        say "File $filename exists. Use --force to overwrite.";
+        next;
+    }
+
     _say("Writing file: $filename");
     write_file( $filename, $lines );
 }
@@ -93,23 +102,24 @@ sub _say {
 }
 
 __DATA__
-:app.psgi
 [% IF less -%]
+:[% name %].psgi
 use Kelp::Less;
 
-get '/home' => sub {
-    template 'home';
+module 'Logger::Simple';
+
+get '/' => sub {
+    "Hello, world!";
 };
 
 run;
 [% ELSE -%]
+:app.psgi
 use lib 'lib';
 use [% name %];
 
 my $app = [% name %]->new();
 $app->run;
-[% END -%]
-[% UNLESS less -%]
 :lib/[% module_path %]/[% module_file %].pm
 package [% name %];
 use Kelp::Base 'Kelp';
@@ -127,8 +137,6 @@ sub home {
 }
 
 1;
-[% END -%]
-[% UNLESS less -%]
 :conf/config.pl
 # Common settings
 {
@@ -212,32 +220,22 @@ sub home {
     # No Logger when testing
     "-modules" => ['Logger']
 }
-[% END -%]
 :views/home.tt
 Hello, world!
-[% UNLESS less -%]
 :log/keep
 keeper
-[% END -%]
 :t/main.t
 use Kelp::Base -strict;
 use Kelp::Test;
 use Test::More;
 use HTTP::Request::Common;
-[% UNLESS less -%]
 use [% name %];
-[% END -%]
 
-[% IF less -%]
-# Create a test object using the app file
-my $t = Kelp::Test->new( psgi => 'app.psgi' );
-[% ELSE -%]
 # Create an application object
 my $app = [% name %]->new( mode => 'test' );
 
 # Feed it into a test object
 my $t = Kelp::Test->new( app => $app );
-[% END -%]
 
 # Send a GET request to /home and test the response
 $t->request( GET '/home' )
@@ -246,3 +244,4 @@ $t->request( GET '/home' )
   ->content_like(qr/Hello, world!/);
 
 done_testing;
+[% END %]

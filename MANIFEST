@@ -14,9 +14,11 @@ lib/Kelp/Base.pm
 lib/Kelp/Less.pm
 lib/Kelp/Module.pm
 lib/Kelp/Module/Config.pm
+lib/Kelp/Module/Config/Less.pm
 lib/Kelp/Module/Config/Null.pm
 lib/Kelp/Module/JSON.pm
 lib/Kelp/Module/Logger.pm
+lib/Kelp/Module/Logger/Simple.pm
 lib/Kelp/Module/Null.pm
 lib/Kelp/Module/Routes.pm
 lib/Kelp/Module/Template.pm

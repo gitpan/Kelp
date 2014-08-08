@@ -349,7 +349,7 @@ CREATING A NEW WEB APP
     All of the examples here show routes which take an instance of the web
     application as a first parameter. This is true even if those routes live
     in another class. To rebless the app instance into the controller class
-    instance, use the custom router class Kelp::Router::Controller.
+    instance, use the custom router class Kelp::Routes::Controller.
 
    Step 1: Specify the custom router class in the config
         # config.pl
