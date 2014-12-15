@@ -180,7 +180,7 @@ CREATING A NEW WEB APP
         This is the PSGI file, of the app, which you will deploy. In it's
         most basic form it should look like this:
 
-            use lib '../lib';
+            use lib './lib';
             use MyApp;
 
             my $app = MyApp->new;
@@ -457,7 +457,8 @@ CREATING A NEW WEB APP
         sub run {
             my $self = shift;
             my $app = $self->SUPER::run(@_);
-            Plack::Middleware::ContentLength->wrap($app);
+            $app = Plack::Middleware::ContentLength->wrap($app);
+            return $app;
         }
 
     Note that any middleware defined in your config file will be added
@@ -899,7 +900,7 @@ AUTHOR
     Stefan Geneshky - minimal <at> cpan.org
 
 CONTRIBUTORS
-    Ruslan Zakirov
+    In no particular order:
 
     Julio Fraire
 
@@ -908,6 +909,14 @@ CONTRIBUTORS
     David Steinbrunner
 
     Gurunandan Bhat
+
+    Perlover
+
+    Ruslan Zakirov
+
+    Christian Froemmel (senfomat)
+
+    Ivan Baidakou (basiliscos)
 
 LICENSE
     This module and all the modules in this package are governed by the same

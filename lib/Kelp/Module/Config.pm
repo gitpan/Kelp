@@ -103,10 +103,13 @@ sub load {
     {
         local $@;
         my $app = $self->app;
+        my $module = $filename;
+        $module =~ s/\W/_/g;
         $hash =
-            eval "package Kelp::Module::Config::Sandbox;"
+            eval "package Kelp::Module::Config::Sandbox::$module;"
           . "use Kelp::Base -strict;"
           . "sub app; local *app = sub { \$app };"
+          . "sub include(\$); local *include = sub { \$self->load(\@_) };"
           . $text;
         $error = $@;
     }
@@ -287,6 +290,25 @@ keyword.
     {
         bin_path => app->path . '/bin'
     }
+
+=head1 INCLUDING FILES
+
+To include other config files, one may use the C<include> keyword.
+
+    # config.pl
+    {
+        modules_init => {
+            Template => include('conf/my_template.pl')
+        }
+    }
+
+    # my_template.pl
+    {
+        path => 'views/',
+        utf8 => 1
+    }
+
+Any config file may be included as long as it returns a hashref.
 
 =head1 MERGING
 

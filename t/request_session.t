@@ -37,9 +37,15 @@ $app->add_route( '/session', sub {
         faa => 'taa'
       };
 
-    $r->session = {};
-    is_deeply $r->session, $s;
+    $r->session({});
+    is_deeply $r->session, {};
+    is_deeply $r->env->{'psgix.session'}, {};
+
+    return 'All OK';
 });
-$t->request( GET '/session' );
+
+$t->request( GET '/session' )
+    ->code_is(200)
+    ->content_is('All OK');
 
 done_testing;

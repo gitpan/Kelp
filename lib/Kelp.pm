@@ -12,7 +12,7 @@ use Plack::Util;
 use Kelp::Request;
 use Kelp::Response;
 
-our $VERSION = 0.9015;
+our $VERSION = 0.9021;
 
 # Basic attributes
 attr -host => hostname;
@@ -127,7 +127,9 @@ sub run {
         for my $class (@$middleware) {
 
             # Make sure the middleware was not already loaded
-            next if $self->{_loaded_middleware}->{$class}++;
+            # This does not apply for testing, in which case we want
+            # the middleware to wrap every single time
+            next if $self->{_loaded_middleware}->{$class}++ && !$ENV{KELP_TESTING};
 
             my $mw = Plack::Util::load_class($class, 'Plack::Middleware');
             my $args = $self->config("middleware_init.$class") // {};
@@ -491,7 +493,7 @@ units for your web app.
 This is the L<PSGI> file, of the app, which you will deploy. In it's most basic
 form it should look like this:
 
-    use lib '../lib';
+    use lib './lib';
     use MyApp;
 
     my $app = MyApp->new;
@@ -804,7 +806,8 @@ returned app.
     sub run {
         my $self = shift;
         my $app = $self->SUPER::run(@_);
-        Plack::Middleware::ContentLength->wrap($app);
+        $app = Plack::Middleware::ContentLength->wrap($app);
+        return $app;
     }
 
 Note that any middleware defined in your config file will be added first.
@@ -1315,7 +1318,7 @@ Stefan Geneshky - minimal <at> cpan.org
 
 =head1 CONTRIBUTORS
 
-Ruslan Zakirov
+In no particular order:
 
 Julio Fraire
 
@@ -1324,6 +1327,14 @@ Maurice Aubrey
 David Steinbrunner
 
 Gurunandan Bhat
+
+Perlover
+
+Ruslan Zakirov
+
+Christian Froemmel (senfomat)
+
+Ivan Baidakou (basiliscos)
 
 =head1 LICENSE
 

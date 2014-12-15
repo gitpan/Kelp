@@ -57,15 +57,21 @@ sub param {
 }
 
 sub session {
-    my $self = shift;
-    if ( !@_ ) {
-        return $self->env->{'psgix.session'}
-          // die "No Session middleware wrapped";
+    my $self    = shift;
+    my $session = $self->env->{'psgix.session'}
+      // die "No Session middleware wrapped";
+
+    return $session if !@_;
+
+    if ( @_ == 1 ) {
+        my $value = shift;
+        return $session->{$value} unless ref $value;
+        return $self->env->{'psgix.session'} = $value;
     }
-    return $self->session->{ $_[0] } if @_ == 1;
+
     my %hash = @_;
-    $self->session->{$_} = $hash{$_} for keys %hash;
-    return \%hash;
+    $session->{$_} = $hash{$_} for keys %hash;
+    return $session;
 }
 
 1;
@@ -150,36 +156,53 @@ to use L<Plack::Middleware::ReverseProxy>.
     # app.psgi
 
     builder {
-        enable_if { $_[0]->{REMOTE_ADDR} =~ /127\.0\.0\.1/ }
+        enable_if { ! $_[0]->{REMOTE_ADDR} || $_[0]->{REMOTE_ADDR} =~ /127\.0\.0\.1/ }
         "Plack::Middleware::ReverseProxy";
         $app->run;
     };
+
+(REMOTE_ADDR is not set at all when using the proxy via filesocket).
 
 =head2 session
 
 Returns the Plack session hash or dies if no C<Session> middleware was included.
 
-    sub route_zero {
+    sub get_session_value {
         my $self = shift;
         $self->session->{user} = 45;
     }
 
 If called with a single argument, returns that value from the session hash:
 
-    sub route_one {
+    sub set_session_value {
         my $self = shift;
         my $user = $self->req->session('user');
+        # Same as $self->req->session->{'user'};
     }
 
 Set values in the session using key-value pairs:
 
-    sub route_two {
+    sub set_session_hash {
         my $self = shift;
         $self->req->session(
             name  => 'Jill Andrews',
             age   => 24,
             email => 'jill@perlkelp.com'
         );
+    }
+
+Set values using a Hashref:
+
+    sub set_session_hashref {
+        my $self = shift;
+        $self->req->session( { bar => 'foo' } );
+    }
+
+Clear the session:
+
+    sub clear_session {
+        my $self = shift;
+        $self->req->session( {} );
     }
 
 =head3 Common tasks with sessions
